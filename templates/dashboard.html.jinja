@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>Fraud Investigation Dashboard</title>
+  </head>
+  <body>
+    <h1>Fraud Investigation Dashboard</h1>
+    <table>
+      <thead>
+        <tr>
+          <td>Transaction ID</td>
+          <td>Fraud Probability</td>
+        </tr>
+      </thead>
+
+      <tbody>
+      {% for prediction in predictions %}
+        <tr>
+          <td>{{ prediction['org_name'] or 'Missing org name'}}</td>
+          <td>{{ prediction['prediction'] }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
+
