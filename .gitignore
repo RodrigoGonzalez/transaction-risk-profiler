@@ -201,6 +201,11 @@ Thumbs.db
 temp/*
 !temp/.gitkeep
 
+
+# data files
+data/*
+!data/.gitkeep
+
 # pytest
 pytest-coverage.txt
 pytest.xml

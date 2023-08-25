@@ -12,7 +12,6 @@ def is_fraud(x):
 
 
 def get_data(filepath):
-    print("loading training data...")
     df = pd.read_json(filepath)
     mask = np.logical_or(df["acct_type"] == "premium", df["acct_type"].apply(is_fraud))
     df = df[mask]
