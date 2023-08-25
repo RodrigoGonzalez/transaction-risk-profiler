@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "fraud-detection"
+name = "transaction-risk-profiler"
 version = "0.1.0"
-description = "Use NLP to identify fraudulent posts or e-mails"
+description = "Use NLP to identify potentially fraudulent e-commerce financial transactions for additional review."
 authors = ["Rodrigo Gonzalez <r@rodrigo-gonzalez.com>"]
 license = "MIT"
 readme = "README.md"
 
 packages = [
-    {include = "fraud_detection", from = "src"}
+    {include = "transaction_risk_profiler", from = "src"}
 ]
 include = ["README.md", "LICENSE", "CHANGELOG.md"]
 
@@ -28,6 +28,9 @@ unicode = "^2.9"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.14.0"
+commitizen = "^3.6.0"
+
+[tool.poetry.group.lint.dependencies]
 pre-commit = "^3.3.3"
 isort = "^5.12.0"
 black = "^23.7.0"
@@ -38,7 +41,7 @@ tryceratops = "^2.3.2"
 lxml = "^4.9.3"
 pycodestyle = "^2.11.0"
 pylama = "^8.4.1"
-commitizen = "^3.6.0"
+
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"
@@ -64,7 +67,7 @@ multi_line_output = 4
 force_single_line = true
 src_paths = ["src", "tests", "scripts"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
-known_first_party = ["fraud_detection"]
+known_first_party = ["transaction_risk_profiler"]
 
 [tool.black]
 line-length = 100
@@ -141,7 +144,7 @@ commit = true
 tag = true
 version_files = [
     "pyproject.toml:version",
-    "src/fraud_detection/__init__.py:__version__",
+    "src/transaction_risk_profiler/__init__.py:__version__",
 ]
 
 [build-system]

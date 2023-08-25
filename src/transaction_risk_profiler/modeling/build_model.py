@@ -1,3 +1,4 @@
+import logging
 import pickle
 
 import numpy as np
@@ -5,6 +6,8 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+logger = logging.getLogger(__name__)
 
 
 def is_fraud(x):
@@ -34,9 +37,9 @@ class Model:
         return df["description"].apply(self.get_description)
 
     def fit(self, df):
-        print("vectorizing...")
+        logger.info("vectorizing...")
         X = self.vectorizer.fit_transform(self.get_descriptions(df)).toarray()
-        print("building model...")
+        logger.info("building model...")
         self.model.fit(X, df["target"].values)
         return self
 

@@ -1,4 +1,5 @@
 import json
+import logging
 import socket
 import time
 from datetime import datetime
@@ -6,6 +7,8 @@ from datetime import datetime
 import requests
 from flask import Flask
 from flask import request
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 PORT = 5353
@@ -43,7 +46,7 @@ def register_for_ping(ip, port):
 if __name__ == "__main__":
     # Register for pinging service
     ip_address = socket.gethostbyname(socket.gethostname())
-    print("attempting to register %s:%d" % (ip_address, PORT))
+    logger.info("attempting to register %s:%d" % (ip_address, PORT))
     register_for_ping(ip_address, str(PORT))
 
     # Start Flask app

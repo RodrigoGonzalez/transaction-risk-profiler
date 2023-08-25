@@ -1,3 +1,4 @@
+import logging
 import socket
 
 import pymongo
@@ -7,6 +8,8 @@ from flask import render_template
 from flask import request
 from model import load_model
 from pymongo import MongoClient
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 PORT = 5353
@@ -22,7 +25,7 @@ def score():
         db.fraud_predictions.insert(data)
 
     except Exception:
-        print("Bad data received.")
+        logger.info("Bad data received.")
 
 
 @app.route("/dashboard")
@@ -49,19 +52,19 @@ if __name__ == "__main__":
     # Setup database connection
     client = MongoClient()
     db = client.fraud_prediction_service
-    print("Connected to Mongo database")
+    logger.info("Connected to Mongo database")
 
     # Load model
     model = load_model()
-    print("Loaded predictive model")
+    logger.info("Loaded predictive model")
 
     # Register for pinging service
     ip_address = socket.gethostbyname(socket.gethostname())
-    print("attempting to register %s:%d") % (ip_address, PORT)
+    logger.info("attempting to register %s:%d") % (ip_address, PORT)
     if register_for_ping(ip_address, str(PORT)):
-        print("Registered with pinging service")
+        logger.info("Registered with pinging service")
     else:
-        print("Registration with pinging service failed.")
+        logger.info("Registration with pinging service failed.")
 
     # Start Flask app
     # 0.0.0.0 is so that the Flask app can receive requests from external
