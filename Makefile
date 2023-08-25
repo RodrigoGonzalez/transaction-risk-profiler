@@ -1,5 +1,5 @@
 # =============================================================================
-# MAKEFILE FOR Fraud Detection
+# MAKEFILE FOR TRANSACTION-RISK-PROFILER
 # =============================================================================
 #
 # Partially inspired by https://github.com/johschmidt42/python-project-johannes
@@ -321,6 +321,11 @@ quick-check:  ## Run quick check
 # =============================================================================
 # ADDITIONAL
 # =============================================================================
+
+comby: ## Generic rules (required comby https://comby.dev/docs/)
+	# install using `brew install comby`
+	echo  "Requires Comby https://comby.dev/docs/"
+	comby 'print(:[1])' 'logger.info(:[1])' -directory 'src' -extensions 'py' -in-place
 
 # =============================================================================
 # SELF DOCUMENTATION

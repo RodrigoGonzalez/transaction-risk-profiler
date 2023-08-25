@@ -1,6 +1,9 @@
+import logging
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class EventAPIClient:
@@ -23,7 +26,7 @@ class EventAPIClient:
 
     def save_to_database(self, row):
         """Save a data row to the database."""
-        print("Received data:\n" + repr(row) + "\n")  # replace this with your code
+        logger.info("Received data:\n" + repr(row) + "\n")  # replace this with your code
 
     def get_data(self):
         """Fetch data from the API."""
@@ -36,15 +39,15 @@ class EventAPIClient:
     def collect(self, interval=30):
         """Check for new data from the API periodically."""
         while True:
-            print("Requesting data...")
+            logger.info("Requesting data...")
             data = self.get_data()
             if data:
-                print("Saving...")
+                logger.info("Saving...")
                 for row in data:
                     self.save_to_database(row)
             else:
-                print("No new data received.")
-            print(f"Waiting {interval} seconds...")
+                logger.info("No new data received.")
+            logger.info(f"Waiting {interval} seconds...")
             time.sleep(interval)
 
 

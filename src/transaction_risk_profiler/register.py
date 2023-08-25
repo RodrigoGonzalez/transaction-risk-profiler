@@ -2,10 +2,8 @@
 To run:
 python register.py test_filename.json
 
-App will display the url students should send their post requests to.
+App will display the url where you can post requests to.
 """
-
-
 import logging
 import os
 import random
@@ -25,6 +23,8 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.wsgi import WSGIContainer
 
+logger = logging.getLogger(__name__)
+
 logging.basicConfig()
 
 PORT = 5000
@@ -42,7 +42,7 @@ def load_data(filename, label="acct_type"):
 
 
 def start_server():
-    print("Starting server...")
+    logger.info("Starting server...")
     app = Flask(__name__)
     api = restful.Api(app)
     api.add_resource(Register, "/{0}".format(REGISTER))
@@ -51,7 +51,7 @@ def start_server():
     thread = Thread(target=IOLoop.instance().start)
     thread.start()
     url = "http://{0}:{1}/{2}".format(IP, PORT, REGISTER)
-    print("Server started. Listening for posts at: {0}".format(url))
+    logger.info("Server started. Listening for posts at: {0}".format(url))
     return app
 
 
@@ -70,7 +70,7 @@ def ping():
         APP = start_server()
 
     index, datapoint = get_random_datapoint()
-    print("Sending datapoint {0} to {1} urls".format(index, len(URLS)))
+    logger.info("Sending datapoint {0} to {1} urls".format(index, len(URLS)))
 
     to_remove = []
 
@@ -80,9 +80,9 @@ def ping():
             requests.post(
                 "{0}/{1}".format(url, SCORE), data=simplejson.dumps(datapoint), headers=headers
             )
-            print("{0} sent data.".format(url))
+            logger.info("{0} sent data.".format(url))
         except requests.ConnectionError:
-            print("{0} not listening. Removing...".format(url))
+            logger.info("{0} not listening. Removing...".format(url))
             to_remove.append(url)
 
     for url in to_remove:
@@ -95,10 +95,10 @@ class Register(restful.Resource):
         port = request.form["port"]
         url = "http://{0}:{1}".format(ip, port)
         if url in URLS:
-            print("{0} already registered".format(url))
+            logger.info("{0} already registered".format(url))
         else:
             URLS.add(url)
-            print("{0} is now registered".format(url))
+            logger.info("{0} is now registered".format(url))
         return {"Message": "Added url {0}".format(url)}
 
     def put(self):
@@ -107,25 +107,25 @@ class Register(restful.Resource):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python register.py test_filename.json")
+        logger.info("Usage: python register.py test_filename.json")
         exit()
-    print("It can take up to 30 seconds to start.")
+    logger.info("It can take up to 30 seconds to start.")
     filename = sys.argv[1]
 
     if not os.path.isfile(filename):
-        print("Invalid filename: {0}".format(filename))
-        print("Goodbye.")
+        logger.info("Invalid filename: {0}".format(filename))
+        logger.info("Goodbye.")
         exit()
 
-    print("Starting scheduler...")
+    logger.info("Starting scheduler...")
     scheduler = BlockingScheduler(timezone=pytz.utc)
     scheduler.add_job(ping, "interval", seconds=10, max_instances=100)
 
-    print("Loading data...")
+    logger.info("Loading data...")
     DATA = load_data(filename)
 
-    print("Press Ctrl+C to exit")
+    logger.info("Press Ctrl+C to exit")
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
-        print("Goodbye!")
+        logger.info("Goodbye!")
