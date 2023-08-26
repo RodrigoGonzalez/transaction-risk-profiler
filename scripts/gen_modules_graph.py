@@ -30,7 +30,7 @@ def build_modules_graph(
     ----------
     path : list[str]
         The path to the directory containing the modules.
-    entrypoint_modules : List[str]
+    entrypoint_modules : list[str]
         A list of module names that serve as entry points.
 
     Raises
@@ -43,9 +43,9 @@ def build_modules_graph(
     -------
     dict
         A dictionary containing the modules graph matrix and package names.
-        - 'matrix' : List[List[int]]
+        - 'matrix' : list[list[int]]
             The adjacency matrix representing the dependencies between modules.
-        - 'packageNames' : List[str]
+        - 'packageNames' : list[str]
             The names of the packages/modules in the graph, sorted in
             lexicographic order.
 

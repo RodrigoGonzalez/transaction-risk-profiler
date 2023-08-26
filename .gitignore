@@ -77,6 +77,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+notebooks/.ipynb_checkpoints
 
 # IPython
 profile_default/
@@ -201,10 +202,16 @@ Thumbs.db
 temp/*
 !temp/.gitkeep
 
-
 # data files
 data/*
 !data/.gitkeep
+!data/dataset_card.yml
+!data/sample_dataset_card.yml
+!data/README.md
+
+# model files
+trained_models/*
+!trained_models/.gitkeep
 
 # pytest
 pytest-coverage.txt

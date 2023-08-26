@@ -45,13 +45,13 @@ def start_server():
     logger.info("Starting server...")
     app = Flask(__name__)
     api = restful.Api(app)
-    api.add_resource(Register, "/{0}".format(REGISTER))
+    api.add_resource(Register, f"/{REGISTER}")
     http_server = HTTPServer(WSGIContainer(app))
     http_server.listen(PORT, "0.0.0.0")
     thread = Thread(target=IOLoop.instance().start)
     thread.start()
-    url = "http://{0}:{1}/{2}".format(IP, PORT, REGISTER)
-    logger.info("Server started. Listening for posts at: {0}".format(url))
+    url = f"http://{IP}:{PORT}/{REGISTER}"
+    logger.info(f"Server started. listening for posts at: {url}")
     return app
 
 
@@ -59,7 +59,7 @@ def get_random_datapoint():
     index = random.randint(0, len(DATA))
     datapoint = DATA.loc[[index]].to_dict()
     # fix the formatting
-    for key, value in datapoint.iteritems():
+    for key, value in datapoint.items():
         datapoint[key] = value.values()[0]
     return index, datapoint
 
@@ -70,19 +70,17 @@ def ping():
         APP = start_server()
 
     index, datapoint = get_random_datapoint()
-    logger.info("Sending datapoint {0} to {1} urls".format(index, len(URLS)))
+    logger.info(f"Sending datapoint {index} to {len(URLS)} urls")
 
     to_remove = []
 
     for url in URLS:
         headers = {"Content-Type": "application/json"}
         try:
-            requests.post(
-                "{0}/{1}".format(url, SCORE), data=simplejson.dumps(datapoint), headers=headers
-            )
-            logger.info("{0} sent data.".format(url))
+            requests.post(f"{url}/{SCORE}", data=simplejson.dumps(datapoint), headers=headers)
+            logger.info(f"{url} sent data.")
         except requests.ConnectionError:
-            logger.info("{0} not listening. Removing...".format(url))
+            logger.info(f"{url} not listening. Removing...")
             to_remove.append(url)
 
     for url in to_remove:
@@ -93,13 +91,13 @@ class Register(restful.Resource):
     def post(self):
         ip = request.form["ip"]
         port = request.form["port"]
-        url = "http://{0}:{1}".format(ip, port)
+        url = f"http://{ip}:{port}"
         if url in URLS:
-            logger.info("{0} already registered".format(url))
+            logger.info(f"{url} already registered")
         else:
             URLS.add(url)
-            logger.info("{0} is now registered".format(url))
-        return {"Message": "Added url {0}".format(url)}
+            logger.info(f"{url} is now registered")
+        return {"Message": f"Added url {url}"}
 
     def put(self):
         return simplejson.dumps(request.json)
@@ -113,7 +111,7 @@ if __name__ == "__main__":
     filename = sys.argv[1]
 
     if not os.path.isfile(filename):
-        logger.info("Invalid filename: {0}".format(filename))
+        logger.info(f"Invalid filename: {filename}")
         logger.info("Goodbye.")
         exit()
 

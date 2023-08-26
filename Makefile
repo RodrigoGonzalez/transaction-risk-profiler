@@ -89,7 +89,6 @@ add-all:  ## Add all files to git
 	git add -A
 
 pre-commit: add-all  ## Manually run all pre-commit hooks
-	export PYTHONPATH=$PYTHONPATH:/Users/rodrigogonzalez/workspace/DiscoverGPT
 	poetry run pre-commit run -c .pre-commit-config.yaml
 
 pre-commit-tool:  ## Manually run a single pre-commit hook (e.g. `make pre-commit-tool TOOL=black`)
@@ -97,7 +96,7 @@ pre-commit-tool:  ## Manually run a single pre-commit hook (e.g. `make pre-commi
 
 # https://commitizen-tools.github.io/commitizen/bump/
 #commit: pre-commit tests  ## Commit changes
-commit: pre-commit  ## Commit changes
+commit: clean-notebooks pre-commit  ## Commit changes
 	./scripts/commit.sh
 
 bump:  ## Bump version and update changelog
@@ -245,7 +244,7 @@ new-feat-branch: check-branch-name  ## Create a new feature branch
 	git checkout -b feat/$(BRANCH)_$(commit_count)
 
 new-version-branch:  ## Create a new version branch
-	NEW_VERSION=$(shell poetry run cz bump --dry-run | grep 'bump: version' | awk -F ' ' '{print $$NF}'); \
+	NEW_VERSION=$(shell poetry run cz bump --dry-run | grep 'bump: version' | awk -F ' ' '{print($$NF}'); \
 	git checkout -b v$$NEW_VERSION
 
 .PHONY: check-branch-name new-branch new-feat-branch new-version-branch
@@ -326,6 +325,10 @@ comby: ## Generic rules (required comby https://comby.dev/docs/)
 	# install using `brew install comby`
 	echo  "Requires Comby https://comby.dev/docs/"
 	comby 'print(:[1])' 'logger.info(:[1])' -directory 'src' -extensions 'py' -in-place
+
+clean-notebooks: ## Remove output files from notebooks
+	#jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
+	find . -type f -name '*.ipynb' -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
 
 # =============================================================================
 # SELF DOCUMENTATION
