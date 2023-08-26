@@ -6,44 +6,41 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import train_test_split
 
-
-def prop(cells):
-    if len(cells) <= 0:
-        return 0
-    return 1 - (sum(cell["address"].strip() == "" for cell in cells) / float(len(cells)))
+from transaction_risk_profiler.common.enums.dataset import TargetEnum
+from transaction_risk_profiler.feature_engineering.categorical import create_binary_column
+from transaction_risk_profiler.feature_engineering.categorical import create_binary_from_value
+from transaction_risk_profiler.feature_engineering.simple_transforms import fill_na_with_value
+from transaction_risk_profiler.feature_engineering.simple_transforms import mismatch_country
+from transaction_risk_profiler.feature_engineering.simple_transforms import proportion_non_empty
 
 
 def load_clean_data(filename, training=False):
     df = pd.read_json(filename)
     # df = pd.read_json('data/subset_1000.json')
-    fraud_list = ["fraudster", "fraudster_event", "fraudster_att"]
-    spammer_list = ["spammer_limited", "spammer_noinvite", "spammer_web", "spammer", "spammer_warn"]
-    tos_list = ["tos_warn", "tos_lock"]
-    locked_list = ["locked"]
-    suspicious_list = spammer_list + tos_list + locked_list
-    fraud_list += suspicious_list
+    fraud_list = TargetEnum.fraud_list()
 
     # EDA and some preliminary feature engineering
 
     # creating binary categories for columns with blanks
-    df["has_venue_address"] = df.venue_address != ""
-    df["has_venue_name"] = df.venue_name != ""
-    df["has_payee_name"] = df.payee_name != ""
-    df["gts_bin"] = df.gts != 0
-    df["body_length_bin"] = df.body_length != 0
-    df["name_length_bin"] = df.name_length < 18
-    df["num_payouts_bin"] = df.num_payouts != 0
-    df["sale_duration_bin"] = df.sale_duration2.apply(lambda x: x < 10 or x == 40)
+    create_binary_from_value(df, "has_venue_address", "venue_address", "")
+    create_binary_from_value(df, "has_venue_name", "venue_name", "")
+    create_binary_from_value(df, "has_payee_name", "payee_name", "")
+    create_binary_from_value(df, "gts_bin", "gts", 0)
+    create_binary_from_value(df, "body_length_bin", "body_length", 0)
+    create_binary_from_value(df, "num_payouts_bin", "num_payouts", 0)
+    create_binary_column(df, "name_length_bin", "name_length", lambda x: x < 18)
+    create_binary_column(df, "sale_duration_bin", "sale_duration2", lambda x: x < 10 or x == 40)
 
     # df['bias'] = 1
 
     # filling nan values
-    df["has_header"].fillna(value=0, inplace=True)
-    df.venue_longitude.fillna(180, inplace=True)
-    df.venue_latitude.fillna(70, inplace=True)
+    fill_na_with_value(df, "has_header", 0)
+    fill_na_with_value(df, "venue_longitude", 180)
+    fill_na_with_value(df, "venue_latitude", 70)
 
     # making dummies for a major countries by hand
-    df["mismatch_country"] = df.country != df.venue_country
+    mismatch_country(df, "mismatch_country", "country", "venue_country")
+
     df["is_us"] = df.country == "US"
     df["is_gb"] = df.country == "GB"
     df["is_ca"] = df.country == "CA"
@@ -112,7 +109,9 @@ def load_clean_data(filename, training=False):
     for ut in user_types:
         df[ut] = df.user_type == int(ut.strip("user_type_"))
 
-    df["prop_has_address"] = df["previous_payouts"].apply(prop)
+    df["prop_has_address"] = df["previous_payouts"].apply(
+        lambda x: proportion_non_empty(x, field_name="address")
+    )
 
     # dropping columns
     columns_to_drop = [
@@ -172,10 +171,10 @@ def make_model(X, y, thresh=0.14):
     # preds = clf.predict(X_test)
     probs = clf.predict_proba(X_test)[:, 1]
     preds = probs >= thresh
-    recall_score(y_test, preds)
-    precision_score(y_test, preds)
-    # print "Recall = ", recall
-    # print "Precision = ", precision
+    recall = recall_score(y_test, preds)
+    precision = precision_score(y_test, preds)
+    print("Recall = ", recall)
+    print("Precision = ", precision)
     return clf
 
 

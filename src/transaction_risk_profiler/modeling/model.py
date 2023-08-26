@@ -7,24 +7,16 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import train_test_split
 
+from transaction_risk_profiler.common.enums.dataset import TargetEnum
+from transaction_risk_profiler.feature_engineering.simple_transforms import proportion_non_empty
+
 logger = logging.getLogger(__name__)
-
-
-def prop(cells):
-    if len(cells) <= 0:
-        return 0
-    return 1 - (sum(cell["address"].strip() == "" for cell in cells) / float(len(cells)))
 
 
 def load_clean_data():
     df = pd.read_json("data/transactions.json")
     # df = pd.read_json('data/subset_1000.json')
-    fraud_list = ["fraudster", "fraudster_event", "fraudster_att"]
-    spammer_list = ["spammer_limited", "spammer_noinvite", "spammer_web", "spammer", "spammer_warn"]
-    tos_list = ["tos_warn", "tos_lock"]
-    locked_list = ["locked"]
-    suspicious_list = spammer_list + tos_list + locked_list
-    fraud_list += suspicious_list
+    fraud_list = TargetEnum.fraud_list()
 
     # EDA and some preliminary feature engineering
     df["fraud"] = df.acct_type.isin(fraud_list)  # classify as fraud or not (True or False)
@@ -76,7 +68,9 @@ def load_clean_data():
         axis=1,
     )
 
-    df["prop_has_address"] = df["previous_payouts"].apply(prop)
+    df["prop_has_address"] = df["previous_payouts"].apply(
+        lambda x: proportion_non_empty(x, field_name="address")
+    )
 
     # df1 = df[
     #     [
