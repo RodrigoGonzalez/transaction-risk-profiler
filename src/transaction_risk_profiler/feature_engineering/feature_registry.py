@@ -172,7 +172,7 @@ class FeatureRegistry:
 
         Returns
         -------
-        raw_feature_registry_metadata : Dict
+        raw_feature_registry_metadata : dict
             Dictionary containing the contents of the feature registry metadata yaml file
         """
         return yaml_ordered_load(open(self._feature_registry_path, "rb"))
@@ -185,12 +185,12 @@ class FeatureRegistry:
 
         Parameters
         ----------
-        raw_feature_registry_metadata : Dict
+        raw_feature_registry_metadata : dict
             Dictionary containing the contents of the feature registry metadata yaml file
 
         Returns
         -------
-        feature_registry_metadata : Dict
+        feature_registry_metadata : dict
             Dictionary containing every record for a given feature
         """
         raw_feature_registry_metadata = (
@@ -210,7 +210,7 @@ class FeatureRegistry:
 
         Parameters
         ----------
-        feature_registry_metadata : Dict
+        feature_registry_metadata : dict
             Dictionary containing every record for a given feature
 
         Returns

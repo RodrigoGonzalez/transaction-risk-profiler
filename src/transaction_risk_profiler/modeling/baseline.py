@@ -2,12 +2,10 @@
 import json
 import logging
 import pickle
-from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn import metrics
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -21,9 +19,9 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
-from sklearn.utils.extmath import density
 
 from transaction_risk_profiler.eda.dependency_plots import partial_dependency_plots
+from transaction_risk_profiler.modeling.benchmark import benchmark_model
 from transaction_risk_profiler.preprocessing.text import clean_description
 from transaction_risk_profiler.preprocessing.text import feature_descriptions
 
@@ -118,36 +116,6 @@ def read_fraud_vocab(f_name):
     return fraud["fraud"]
 
 
-def benchmark(clf):
-    logger.info("_" * 80)
-    logger.info("Training: ")
-    logger.info(clf)
-    t0 = time()
-    clf.fit(X_train, y_train)
-    train_time = time() - t0
-    logger.info("train time: %0.3fs" % train_time)
-
-    t0 = time()
-    y_pred = clf.predict(X_test)
-    test_time = time() - t0
-    logger.info("test time: %0.3fs" % test_time)
-
-    accuracy = metrics.accuracy_score(y_test, y_pred)
-    recall = metrics.recall_score(y_test, y_pred)
-    precision = metrics.precision_score(y_test, y_pred)
-    logger.info("accuracy:   %0.3f" % accuracy)
-    logger.info("recall: %0.3f" % recall)
-    logger.info("precision: %0.3f" % precision)
-
-    if hasattr(clf, "coef_"):
-        logger.info("dimensionality: %d" % clf.coef_.shape[1])
-        logger.info("density: %f" % density(clf.coef_))
-
-    logger.info()
-    clf_descr = str(clf).split("(")[0]
-    return clf_descr, accuracy, recall, precision, train_time, test_time
-
-
 def get_probs(clf, X, y):
     clf = BernoulliNB(alpha=0.01)
     clf.fit(X, y)
@@ -191,18 +159,18 @@ def plotter(results):
 #     print('=' * 80)
 #     print("%text penalty" % penalty.upper())
 #     # Train Liblinear model
-#     results.append(benchmark(LinearSVC(loss='l2', penalty=penalty,
+#     results.append(benchmark_model(LinearSVC(loss='l2', penalty=penalty,
 #                                             dual=False, tol=1e-3)))
 #
 #     # Train SGD model
-#     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
+#     results.append(benchmark_model(SGDClassifier(alpha=.0001, n_iter=50,
 #                                            penalty=penalty)))
 #
 # print('=' * 80)
 # print("LinearSVC with L1-based feature selection")
 # # The smaller C, the stronger the regularization.
 # # The more regularization, the more sparsity.
-# results.append(benchmark(Pipeline([
+# results.append(benchmark_model(Pipeline([
 #   ('feature_selection', LinearSVC(penalty="l1", dual=False, tol=1e-3)),
 #   ('classification', LinearSVC())
 # ])))
@@ -321,5 +289,5 @@ if __name__ == "__main__":
     ):
         logger.info("=" * 80)
         logger.info(name)
-        results.append(benchmark(clf))
+        results.append(benchmark_model(clf))
     plotter(results)

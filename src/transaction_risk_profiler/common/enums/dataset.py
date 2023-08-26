@@ -49,3 +49,66 @@ class DataColumns(Enum, str):
     VENUE_LONGITUDE = "venue_longitude"
     VENUE_NAME = "venue_name"
     VENUE_STATE = "venue_state"
+
+
+class TargetEnum(str, Enum):
+    """Enum for the target categories"""
+
+    # Premium related
+    PREMIUM = "premium"
+
+    # Fraudster related
+    FRAUDSTER = "fraudster"
+    FRAUDSTER_EVENT = "fraudster_event"
+    FRAUDSTER_ATT = "fraudster_att"
+
+    # Spammer related
+    SPAMMER_LIMITED = "spammer_limited"
+    SPAMMER_NOINVITE = "spammer_noinvite"
+    SPAMMER_WEB = "spammer_web"
+    SPAMMER = "spammer"
+    SPAMMER_WARN = "spammer_warn"
+
+    # Terms of Service related
+    TOS_WARN = "tos_warn"
+    TOS_LOCK = "tos_lock"
+
+    # Locked
+    LOCKED = "locked"
+
+    @staticmethod
+    def fraud_list() -> list[str]:
+        """Returns a list of fraudster categories."""
+        fraud_list = [
+            TargetEnum.FRAUDSTER.value,
+            TargetEnum.FRAUDSTER_EVENT.value,
+            TargetEnum.FRAUDSTER_ATT.value,
+        ]
+        fraud_list += TargetEnum.suspicious_list()
+        return fraud_list
+
+    @staticmethod
+    def spammer_list() -> list[str]:
+        """Returns a list of spammer categories."""
+        return [
+            TargetEnum.SPAMMER_LIMITED.value,
+            TargetEnum.SPAMMER_NOINVITE.value,
+            TargetEnum.SPAMMER_WEB.value,
+            TargetEnum.SPAMMER.value,
+            TargetEnum.SPAMMER_WARN.value,
+        ]
+
+    @staticmethod
+    def tos_list() -> list[str]:
+        """Returns a list of terms of service violation categories."""
+        return [TargetEnum.TOS_WARN.value, TargetEnum.TOS_LOCK.value]
+
+    @staticmethod
+    def locked_list() -> list[str]:
+        """Returns a list of locked categories."""
+        return [TargetEnum.LOCKED.value]
+
+    @staticmethod
+    def suspicious_list() -> list[str]:
+        """Returns a list of suspicious categories."""
+        return TargetEnum.spammer_list() + TargetEnum.tos_list() + TargetEnum.locked_list()

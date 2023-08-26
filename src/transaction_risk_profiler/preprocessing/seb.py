@@ -18,8 +18,7 @@ STEMMER = PorterStemmer()
 
 
 def clean_descr(text):
-    text = text.replace("\xa0", " ")
-    soup = BeautifulSoup(text, "html.parser")
+    soup = get_soup(text)
     text = " ".join([try_text(x) for x in soup.contents])
     stop_words = stopwords.words("english")
     text = [x for x in text.split() if x not in stop_words]
@@ -27,11 +26,15 @@ def clean_descr(text):
 
 
 def feature_descr(text):
-    text = text.replace("\xa0", " ")
-    soup = BeautifulSoup(text, "html.parser")
+    soup = get_soup(text)
 
     links = [a.attrs["href"] for a in soup.find_all("a") if a.has_attr("href")]
     return len(links)
+
+
+def get_soup(text):
+    text = text.replace("\xa0", " ")
+    return BeautifulSoup(text, "html.parser")
 
 
 def get_top_features(vectorizer, matrix):

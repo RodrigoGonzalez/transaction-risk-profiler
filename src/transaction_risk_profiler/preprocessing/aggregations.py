@@ -28,7 +28,7 @@ def group_by_elements(key_selector: Callable[[T], V], sequence: Iterable[T]) -> 
 
     Returns
     -------
-    Dict[V, list[T]]
+    dict[V, list[T]]
         A dictionary where each key is of type `V` and maps to a list of
         elements of a type `T`.
 
@@ -62,7 +62,7 @@ def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
 
     Returns
     -------
-    Dict[str, Dict[str, Any]]
+    dict[str, dict[str, Any]]
         A nested dictionary containing the aggregation schema.
 
     Examples

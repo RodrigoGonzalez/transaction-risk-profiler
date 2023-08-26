@@ -2,10 +2,10 @@ from datetime import datetime
 
 
 def get_line_value(
-    left_value: float,
-    right_value: float,
-    left_date: datetime,
-    right_date: datetime,
+    start_value: float,
+    end_value: float,
+    start_date: datetime,
+    end_date: datetime,
     current_date: datetime,
 ) -> float:
     """
@@ -13,14 +13,14 @@ def get_line_value(
 
     Parameters
     ----------
-    left_value : float
-        The value at `left_date`.
-    right_value : float
-        The value at `right_date`.
-    left_date : datetime
-        The date corresponding to `left_value`.
-    right_date : datetime
-        The date corresponding to `right_value`.
+    start_value : float
+        The value at `start_date`.
+    end_value : float
+        The value at `end_date`.
+    start_date : datetime
+        The date corresponding to `start_value`.
+    end_date : datetime
+        The date corresponding to `end_value`.
     current_date : datetime
         The date at which to compute the value.
 
@@ -29,11 +29,11 @@ def get_line_value(
     float
         The interpolated value at `current_date`.
     """
-    segment = (right_date - left_date).days
-    day_diff = (current_date - left_date).days
-    val_diff = right_value - left_value
+    segment = (end_date - start_date).days
+    day_diff = (current_date - start_date).days
+    value_diff = end_value - start_value
 
-    return left_value + (val_diff * day_diff / segment)
+    return start_value + (value_diff * day_diff / segment)
 
 
 def piecewise_linear(dates: list[datetime], values: list[float], current_date: datetime) -> float:
@@ -55,16 +55,16 @@ def piecewise_linear(dates: list[datetime], values: list[float], current_date: d
     float
         The interpolated value at `current_date`.
     """
-    prev_val = values[0]
-    prev_day = dates[0]
+    if not dates or not values or len(dates) != len(values):
+        raise ValueError("Dates and values must be non-empty and of the same length.")  # noqa
 
-    if current_date < prev_day:
-        return prev_val
+    if current_date < dates[0]:
+        return values[0]
 
-    for day, val in zip(dates[1:], values[1:]):
-        if current_date < day:
-            return get_line_value(prev_val, val, prev_day, day, current_date)
+    for (start_date, start_value), (end_date, end_value) in zip(
+        zip(dates[:-1], values[:-1]), zip(dates[1:], values[1:])
+    ):
+        if current_date < end_date:
+            return get_line_value(start_value, end_value, start_date, end_date, current_date)
 
-        prev_day, prev_val = day, val
-
-    return val
+    return values[-1]
