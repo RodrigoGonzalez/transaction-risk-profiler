@@ -1,7 +1,7 @@
 """head_json.py - extract a couple records from a huge json file.
 
 Syntax: python head_json.py < data/transactions.json > data/transactions_subset.json
-python head_json.py < data/train_new.json > data/train_subset.json
+python head_json.py < data/transactions.json > data/train_subset.json
 """
 
 import sys

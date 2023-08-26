@@ -1,5 +1,6 @@
 """ Preprocessing the data """
 import logging
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -44,13 +45,8 @@ class DataPreProcessing:
         self._feature_engineering()
 
     @staticmethod
-    def _get_feature(func: callable, feat: str, x: list) -> float:
-        """
-        input: function, string, list of dictionary's
-        output: float
-
-        Returns the function value applied to the input feature
-        """
+    def _get_feature(func: Callable, feat: str, x: list) -> float:
+        """Returns the function value applied to the input feature"""
         val = [i[feat] for i in x]
         return func(val) if val else 0
 
@@ -117,8 +113,7 @@ class DataPreProcessing:
 
 
 if __name__ == "__main__":
-    # path = "test.json"
-    path = "data/train_new.json"
+    path = "data/transactions.json"
     data = DataPreProcessing(path)
     logger.info(data.df.head())
 

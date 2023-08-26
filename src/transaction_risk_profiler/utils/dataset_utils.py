@@ -4,10 +4,10 @@ from zlib import crc32
 
 import numpy as np
 import pandas as pd
-from shap_app.configs import settings
-from shap_app.main import APP_DIR
 from strictyaml import YAML
 from strictyaml import load
+
+from transaction_risk_profiler.configs import settings
 
 
 def is_id_in_test_set(identifier: int, test_ratio: float) -> bool:
@@ -67,12 +67,12 @@ def split_data_with_id_hash(
 
 
 def fetch_dataset_card(
-    dataset_card_path: Path | None = None, dataset_name: str | None = "boston_housing"
+    dataset_card_path: Path | None = None, dataset_card: str | None = "dataset_card.yml"
 ) -> YAML:
     """Parse YAML containing the package configuration."""
     if not dataset_card_path:
         dataset_card_path = Path(
-            f"{APP_DIR}/{settings.DATASET_DIRECTORY}/{dataset_name}/datasetcard.yml"
+            f"{settings.PROJECT_DIRECTORY}/{settings.DATASET_DIRECTORY}/{dataset_card}"
         )
     if dataset_card_path:
         with open(dataset_card_path) as conf_file:

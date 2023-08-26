@@ -96,7 +96,7 @@ pre-commit-tool:  ## Manually run a single pre-commit hook (e.g. `make pre-commi
 
 # https://commitizen-tools.github.io/commitizen/bump/
 #commit: pre-commit tests  ## Commit changes
-commit: clean-notebooks pre-commit  ## Commit changes
+commit: pre-commit  ## Commit changes
 	./scripts/commit.sh
 
 bump:  ## Bump version and update changelog
@@ -327,8 +327,8 @@ comby: ## Generic rules (required comby https://comby.dev/docs/)
 	comby 'print(:[1])' 'logger.info(:[1])' -directory 'src' -extensions 'py' -in-place
 
 clean-notebooks: ## Remove output files from notebooks
-	#jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
-	find . -type f -name '*.ipynb' -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
+	jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
+	# find . -type f -name '*.ipynb' -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
 
 # =============================================================================
 # SELF DOCUMENTATION

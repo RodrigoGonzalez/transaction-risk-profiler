@@ -1,19 +1,16 @@
 import json
 
-import bs4
 import numpy as np
 import pandas as pd
 from pandas import json_normalize
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from transaction_risk_profiler.preprocessing.text import extract_text
+
 
 def get_df(filename):
     js = json.load(open(filename))
     return json_normalize(js)
-
-
-def extract_text(a):
-    return bs4.BeautifulSoup(a).text
 
 
 def make_tfidf(in_df, text_cols):
@@ -72,21 +69,6 @@ def fix_missing_values(in_df, cols):
     for col in cols:
         df[col] = df[col].fillna(0)
     return df
-
-
-def drop_straight_up(in_df, cols):
-    df = in_df.copy()
-    for col in cols:
-        if col in df.columns:
-            df = df.drop(col, axis=1)
-    return df
-
-
-def get_rid_of_tos_lock(in_df):
-    df = in_df.copy()
-    df = df[df["acct_type"] != "tos_warn"]
-    df = df[df["acct_type"] != "tos_lock"]
-    return df[df["acct_type"] != "locked"]
 
 
 def make_label(in_df):

@@ -9,7 +9,7 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from transaction_risk_profiler.modeling.baseline import try_text
+from transaction_risk_profiler.preprocessing.text import try_text
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ def get_data(f_name: dict | str, head: bool = False) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    data = get_data("data/train_new.json", True)
+    data = get_data("data/transactions.json", True)
 
     # create_vocab(df)
     # fraud_vocab = read_fraud_vocab('fraud_vocab.json')

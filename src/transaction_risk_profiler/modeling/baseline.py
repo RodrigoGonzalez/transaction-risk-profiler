@@ -1,17 +1,12 @@
 """ This module generates the baseline models for the transaction risk profiler. """
 import json
 import logging
-import os
 import pickle
-from collections import Counter
 from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from bs4 import BeautifulSoup
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
 from sklearn import metrics
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -28,6 +23,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.utils.extmath import density
 
+from transaction_risk_profiler.eda.dependency_plots import partial_dependency_plots
+from transaction_risk_profiler.preprocessing.text import clean_description
+from transaction_risk_profiler.preprocessing.text import feature_descriptions
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,84 +41,9 @@ def fill_nans(data_frame):
                 data_frame[col].fillna("None", inplace=True)
 
 
-def partial_dependency_plots(model, col, data_frame, folder):
-    vals = data_frame[col].unique()
-    n = data_frame.shape[0]
-    temp = data_frame.copy()
-    x, y = [], []
-    if isinstance(vals[0], str):
-        if len(vals) > 20:
-            vals = []
-        for val in vals:
-            temp[col] = np.repeat(val, n)
-            x.append(val)
-            y.append(model.predict(temp).mean())
-        fig, ax = plt.subplots()
-        ax.bar(np.arange(len(y)), y)
-        ax.set_xticks(np.arange(len(y)) + 0.35)
-        ax.set_xticklabels(x)
-        ax.set_title(f"partial_dependency_plots of {col}")
-        ax.set_ylabel("Fraud")
-        ax.set_xlabel(col)
-    else:
-        if vals.size > 20:
-            vals = np.linspace(vals.min(), vals.max(), num=20)
-        for val in vals:
-            temp[col] = np.repeat(val, n)
-            x.append(val)
-            y.append(model.predict(temp).mean())
-        plt.scatter(x, y)
-        plt.title(f"partial_dependency_plots of {col}")
-        plt.ylabel("Fraud")
-        plt.xlabel(col)
-
-    if not os.path.exists(f"plots/{folder}"):
-        os.makedirs(f"plots/{folder}")
-    plt.savefig(f"plots/{folder}/{col}.png")
-    plt.close()
-
-
 def make_partial_dependency_plots(model, cols, data_frame, folder):
     for col in cols:
         partial_dependency_plots(model, col, data_frame, folder)
-
-
-def try_text(content):
-    return content.text if hasattr(content, "text") else ""
-
-
-STEMMER = PorterStemmer()
-
-
-def clean_description(text):
-    text = text.replace("\xa0", " ")
-    soup = BeautifulSoup(text, "html.parser")
-    text = " ".join([try_text(x) for x in soup.contents])
-    stop_words = stopwords.words("english")
-    text = [x for x in text.split() if x not in stop_words]
-    return " ".join([STEMMER.stem(x) for x in text])
-
-
-def feature_descriptions(text):
-    text = text.replace("\xa0", " ")
-    soup = BeautifulSoup(text, "html.parser")
-
-    links = [a.attrs["href"] for a in soup.find_all("a") if a.has_attr("href")]
-    return len(links)
-
-
-def feature_descriptions_by_fonts(text):
-    text = text.replace("\xa0", " ")
-    soup = BeautifulSoup(text, "html.parser")
-
-    try:
-        counter = Counter([text.attrs["style"] for text in soup.find_all("span")])
-        font_family = counter.most_common()[0][0]
-    except IndexError:
-        font_family = ""
-
-    links = [a.attrs["href"] for a in soup.find_all("a") if a.has_attr("href")]
-    return pd.Series({"font": font_family, "link_count": len(links)})
 
 
 def get_data():
@@ -131,7 +55,7 @@ def get_data():
         "event_start",
         "user_created",
     ]
-    df = pd.read_json("data/train_new.json", convert_dates=cols, date_unit="s")
+    df = pd.read_json("data/transactions.json", convert_dates=cols, date_unit="s")
     del df["previous_payouts"]
     del df["ticket_types"]
 
