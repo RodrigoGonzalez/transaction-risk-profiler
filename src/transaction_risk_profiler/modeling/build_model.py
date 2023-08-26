@@ -33,24 +33,24 @@ class Model:
     def get_description(html):
         return BeautifulSoup(html).text
 
-    def get_descriptions(self, df):
+    def get_descriptions(self, df: pd.DataFrame):
         return df["description"].apply(self.get_description)
 
-    def fit(self, df):
+    def fit(self, df: pd.DataFrame):
         logger.info("vectorizing...")
         X = self.vectorizer.fit_transform(self.get_descriptions(df)).toarray()
         logger.info("building model...")
         self.model.fit(X, df["target"].values)
         return self
 
-    def predict(self, df):
+    def predict(self, df: pd.DataFrame):
         X = self.vectorizer.transform(self.get_descriptions(df)).toarray()
         return self.model.predict(X)
 
     def predict_one(self, series):
         descriptions = [self.get_description(series["description"])]
-        X = self.vectorizer.transform(descriptions).toarray()
-        return self.model.predict(X)[0]
+        data = self.vectorizer.transform(descriptions).toarray()
+        return self.model.predict(data)[0]
 
 
 def build_model(data_filename, model_filename):

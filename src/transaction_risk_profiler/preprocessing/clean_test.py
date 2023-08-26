@@ -1,13 +1,10 @@
-import logging
+import pickle
 
-import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.model_selection import train_test_split
-
-logger = logging.getLogger(__name__)
 
 
 def prop(cells):
@@ -16,8 +13,8 @@ def prop(cells):
     return 1 - (sum(cell["address"].strip() == "" for cell in cells) / float(len(cells)))
 
 
-def load_clean_data():
-    df = pd.read_json("data/train_new.json")
+def load_clean_data(filename, training=False):
+    df = pd.read_json(filename)
     # df = pd.read_json('data/subset_1000.json')
     fraud_list = ["fraudster", "fraudster_event", "fraudster_att"]
     spammer_list = ["spammer_limited", "spammer_noinvite", "spammer_web", "spammer", "spammer_warn"]
@@ -27,7 +24,7 @@ def load_clean_data():
     fraud_list += suspicious_list
 
     # EDA and some preliminary feature engineering
-    df["fraud"] = df.acct_type.isin(fraud_list)  # classify as fraud or not (True or False)
+
     # creating binary categories for columns with blanks
     df["has_venue_address"] = df.venue_address != ""
     df["has_venue_name"] = df.venue_name != ""
@@ -54,57 +51,68 @@ def load_clean_data():
     df["is_nz"] = df.country == "NZ"
     df["is_blank"] = df.country == ""
 
-    # # make dummies by hand for three biggest email clients
-    # df['gmail'] = df.email_domain == 'gmail.com'
-    # df['yahoo'] = df.email_domain == 'yahoo.com'
-    # df['hotmail'] = df.email_domain == 'hotmail.com'
+    # tops = df.email_domain.value_counts().head(20)
+    # mask = np.logical_not(df.email_domain.isin(tops.index))
+    # df.email_domain.mask(mask, other='other.com', inplace=True)
 
-    tops = df.email_domain.value_counts().head(20)
-    mask = np.logical_not(df.email_domain.isin(tops.index))
-    df.email_domain.mask(mask, other="other.com", inplace=True)
+    # creating dummy columns for top 20 domains by hand
+    email_domains = [
+        "aol.com",
+        "claytonislandtours.com",
+        "comcast.net",
+        "generalassemb.ly",
+        "gmail.com",
+        "greatworldadventures.com",
+        "hotmail.co.uk",
+        "hotmail.com",
+        "improvboston.com",
+        "kineticevents.com",
+        "lidf.co.uk",
+        "live.com",
+        "live.fr",
+        "me.com",
+        "racetonowhere.com",
+        "sippingnpainting.com",
+        "yahoo.ca",
+        "yahoo.co.uk",
+        "yahoo.com",
+        "ymail.com",
+    ]
+    for domain in email_domains:
+        df[domain] = df.email_domain == domain
 
     # make dummies for delivery_method, channel, and email_domain
-    df = pd.concat(
-        [
-            df,
-            pd.get_dummies(df.delivery_method, prefix="delivery_method"),
-            pd.get_dummies(df["channels"], prefix="channel"),
-            pd.get_dummies(df.currency),
-            pd.get_dummies(df.email_domain),
-            pd.get_dummies(df.user_type, prefix="user_type"),
-        ],
-        axis=1,
-    )
+    # df = pd.concat(
+    #     [
+    #         df,
+    #         pd.get_dummies(df.delivery_method, prefix="delivery_method"),
+    #         pd.get_dummies(df["channels"], prefix="channel"),
+    #         pd.get_dummies(df.currency),
+    #         pd.get_dummies(df.email_domain),
+    #         pd.get_dummies(df.user_type, prefix="user_type"),
+    #     ],
+    #     axis=1,
+    # )
+
+    # dummies by hand for delivery method, channel, currency, user type
+
+    delivery_methods = ["delivery_method_0.0", "delivery_method_1.0"]
+    for method in delivery_methods:
+        df[method] = df.delivery_method == float(method.strip("delivery_method_"))
+
+    channels = [0, 4, 5, 6, 8, 9, 10, 11, 12, 13]
+    for channel in channels:
+        df[f"channel_{channel}"] = df.channels == channel
+
+    currencies = ["AUD", "CAD", "EUR", "GBP", "NZD", "USD"]
+    for cur in currencies:
+        df[cur] = df.currency == cur
+
+    user_types = ["user_type_1", "user_type_2", "user_type_3", "user_type_4", "user_type_5"]
+    for ut in user_types:
+        df[ut] = df.user_type == int(ut.strip("user_type_"))
 
     df["prop_has_address"] = df["previous_payouts"].apply(prop)
-
-    # df1 = df[
-    #     [
-    #         "gts_bin",
-    #         "name_length",
-    #         "venue_latitude",
-    #         "venue_longitude",
-    #         "mismatch_country",
-    #         "channel__0",
-    #         "channel__4",
-    #         "channel__5",
-    #         "channel__6",
-    #         "channel__7",
-    #         "channel__8",
-    #         "channel__9",
-    #         "channel__10",
-    #         "channel__11",
-    #         "channel__12",
-    #         "is_us",
-    #         "is_gb",
-    #         "is_ca",
-    #         "is_au",
-    #         "is_nz",
-    #         "is_blank",
-    #         "delivery_method_0.0",
-    #         "delivery_method_1.0",
-    #     ]
-    # ]
 
     # dropping columns
     columns_to_drop = [
@@ -127,17 +135,14 @@ def load_clean_data():
         "org_twitter",
         "org_facebook",
         "country",
-        "other.com",
         "delivery_method",
         "previous_payouts",
         "ticket_types",
         "payout_type",
         "channels",
-        "delivery_method_3.0",
         "gts",
         "body_length",
         "payee_name",
-        "acct_type",
         "description",
         "listed",
         "name",
@@ -145,31 +150,37 @@ def load_clean_data():
         "org_name",
         "email_domain",
         "currency",
-        "MXN",
         "user_type",
-        "user_type_5",
     ]
     df.drop(columns_to_drop, axis=1, inplace=True)
 
+    if not training:
+        return df
+    # make fraud column
+    df["fraud"] = df.acct_type.isin(fraud_list)
+    df.drop("acct_type", axis=1, inplace=True)
     # create target column
     y = df.pop("fraud")
 
     return df, y
 
 
-def make_dumb_model(X, y, thresh=0.14):
+def make_model(X, y, thresh=0.14):
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    clf = RandomForestClassifier(n_estimators=10000, n_jobs=-1)
+    clf = RandomForestClassifier(n_estimators=10000, n_jobs=-1, min_samples_leaf=10)
     clf.fit(X_train, y_train)
     # preds = clf.predict(X_test)
     probs = clf.predict_proba(X_test)[:, 1]
     preds = probs >= thresh
-    recall = recall_score(y_test, preds)
-    precision = precision_score(y_test, preds)
-    logger.info("Recall = ", recall)
-    logger.info("Precision = ", precision)
+    recall_score(y_test, preds)
+    precision_score(y_test, preds)
+    # print "Recall = ", recall
+    # print "Precision = ", precision
+    return clf
 
 
 if __name__ == "__main__":
-    X, y = load_clean_data()
-    make_dumb_model(X.values, y.values, thresh=0.1)
+    X, y = load_clean_data("data/train_new.json", training=True)
+    model = make_model(X.values, y.values, thresh=0.1)
+    with open("model_10.pkl", "w") as f:
+        pickle.dump(model, f)

@@ -6,8 +6,9 @@ import requests
 from flask import Flask
 from flask import render_template
 from flask import request
-from model import load_model
 from pymongo import MongoClient
+
+from transaction_risk_profiler.model import load_model
 
 logger = logging.getLogger(__name__)
 
