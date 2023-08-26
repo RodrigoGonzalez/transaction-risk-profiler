@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Callable
 from collections.abc import Iterable
 from typing import Any
 from typing import TypeVar
@@ -7,7 +8,7 @@ T = TypeVar("T")
 V = TypeVar("V")
 
 
-def group_by_elements(key_selector: callable[[T], V], sequence: Iterable[T]) -> dict[V, list[T]]:
+def group_by_elements(key_selector: Callable[[T], V], sequence: Iterable[T]) -> dict[V, list[T]]:
     """
     Groups elements in an iterable by a given key selector function.
 
@@ -18,7 +19,7 @@ def group_by_elements(key_selector: callable[[T], V], sequence: Iterable[T]) -> 
 
     Parameters
     ----------
-    key_selector : callable[[T], V]
+    key_selector : Callable[[T], V]
         A function that takes an element of type `T` and returns a key of type
         `V`.
 
@@ -35,9 +36,7 @@ def group_by_elements(key_selector: callable[[T], V], sequence: Iterable[T]) -> 
     --------
     >>> group_by_elements(lambda x: x % 2, [1, 2, 3, 4, 5])
     {1: [1, 3, 5], 0: [2, 4]}
-
     """
-
     grouped_elements = defaultdict(list)
 
     for element in sequence:
@@ -87,7 +86,7 @@ def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
     }
     """
 
-    unique_count: callable = lambda x: x.nunique()
+    unique_count: Callable = lambda x: x.nunique()
 
     return {
         "amount": {

@@ -17,7 +17,7 @@ def prop(cells):
 
 
 def load_clean_data():
-    df = pd.read_json("data/train_new.json")
+    df = pd.read_json("data/transactions.json")
     # df = pd.read_json('data/subset_1000.json')
     fraud_list = ["fraudster", "fraudster_event", "fraudster_att"]
     spammer_list = ["spammer_limited", "spammer_noinvite", "spammer_web", "spammer", "spammer_warn"]

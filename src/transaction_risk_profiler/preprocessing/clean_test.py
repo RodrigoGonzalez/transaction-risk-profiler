@@ -180,7 +180,7 @@ def make_model(X, y, thresh=0.14):
 
 
 if __name__ == "__main__":
-    X, y = load_clean_data("data/train_new.json", training=True)
+    X, y = load_clean_data("data/transactions.json", training=True)
     model = make_model(X.values, y.values, thresh=0.1)
     with open("model_10.pkl", "w") as f:
         pickle.dump(model, f)

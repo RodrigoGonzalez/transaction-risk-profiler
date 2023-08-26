@@ -17,7 +17,7 @@ cols = [
     "event_start",
     "user_created",
 ]
-df = pd.read_json("data/train_new.json", convert_dates=cols, date_unit="s")
+df = pd.read_json("data/transactions.json", convert_dates=cols, date_unit="s")
 
 df.remove_columns(["object_id", "venue_country"])
 df["acct_type"] = df["acct_type"].apply(lambda x: "fraud" if x != "premium" else "premium")

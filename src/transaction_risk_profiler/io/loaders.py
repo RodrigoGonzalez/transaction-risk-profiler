@@ -3,17 +3,18 @@ import hashlib
 import logging
 import pickle
 from collections import OrderedDict
-from collections import defaultdict
 from collections.abc import Callable
-from collections.abc import Iterable
 from importlib import import_module
 from os import path
 from pathlib import Path
 from typing import Any
 from typing import TypeVar
+from typing import cast
 
 import pandas as pd
-import yaml
+from yaml import Loader
+from yaml import load
+from yaml import resolver
 
 from transaction_risk_profiler.modeling.build_model import build_model
 
@@ -23,32 +24,32 @@ V = TypeVar("V")
 logger = logging.getLogger(__name__)
 
 
-def load_callable(full_callable_name: str) -> callable:
+def load_callable(full_callable_name: str) -> Callable:
     """
-    Loads a callable (either a function or a class) with a fully qualified name.
+    Loads a Callable (either a function or a class) with a fully qualified name.
 
     Parameters
     ----------
     full_callable_name : str
-        The fully qualified name of the callable
+        The fully qualified name of the Callable
         (e.g., 'module.submodule.callable_name').
 
     Returns
     -------
     Callable
-        The loaded callable (either a function or a class).
+        The loaded Callable (either a function or a class).
 
     Raises
     ------
     ValueError
-        If no callable with the given name exists in the specified module.
+        If no Callable with the given name exists in the specified module.
     """
     full_callable_name.rfind(".")
     module_name, callable_name = full_callable_name.rsplit(sep=".", maxsplit=1)
     module = import_module(module_name)
     _callable = getattr(module, callable_name, None)
     if _callable is None:
-        raise ValueError(f"No callable named {full_callable_name} in sys.path")
+        raise ValueError(f"No Callable named {full_callable_name} in sys.path")
     return _callable
 
 
@@ -124,54 +125,145 @@ def load_model(data_filename="data/transactions.json", model_filename="model.pkl
     return model
 
 
-def yaml_ordered_load(stream, object_pairs_hook=OrderedDict) -> OrderedDict:
-    """Parse a yaml file as an OrderedDict.
-
-    Solution comes from: https://stackoverflow.com/a/21912744
+def construct_ordered_mapping(loader: Loader, node: Any) -> OrderedDict:
     """
+    Construct ordered mapping for YAML loader.
 
-    class OrderedLoader(yaml.Loader):
-        pass
+    This function transforms a YAML node into an ordered dictionary.
 
-    def construct_mapping(loader, node):
-        loader.flatten_mapping(node)
-        return object_pairs_hook(loader.construct_pairs(node))
+    Parameters
+    ----------
+    loader : yaml.Loader
+        The YAML loader.
+    node : Any
+        The YAML node to transform.
 
-    OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
-    return yaml.load(stream, OrderedLoader)
+    Returns
+    -------
+    OrderedDict
+        The ordered dictionary representation of the node.
+    """
+    loader.flatten_mapping(node)
+    return OrderedDict(loader.construct_pairs(node))
 
 
-def pickle_obj(o: Any, file_name: str) -> None:
-    with open(file_name, "wb") as f:
-        pickle.dump(o, f)
-    logger.info(f"Dump {file_name}")
+def yaml_ordered_load(stream: Any, object_pairs_hook: Callable = OrderedDict) -> OrderedDict:
+    """
+    Parse a YAML file as an OrderedDict.
+
+    This function uses a custom YAML Loader that employs an OrderedDict to maintain the order
+    of items as they appear in the YAML file.
+
+    Parameters
+    ----------
+    stream : Any
+        The YAML file stream.
+    object_pairs_hook : Callable, optional
+        The ordered dictionary type to use, by default OrderedDict.
+
+    Returns
+    -------
+    OrderedDict
+        The ordered dictionary representation of the YAML file.
+
+    Notes
+    -----
+    Solution adapted from: https://stackoverflow.com/a/21912744
+    """
+    ordered_loader = cast(type[Loader], type("OrderedLoader", (Loader,), {}))
+    ordered_loader.add_constructor(
+        resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_ordered_mapping
+    )
+    return load(stream, ordered_loader)
+
+
+def pickle_obj(obj: Any, file_name: str) -> None:
+    """
+    Serialize an object and save it to a file.
+
+    Parameters
+    ----------
+    obj : Any
+        The object to be pickled.
+    file_name : str
+        The name of the file where the object will be saved.
+
+    Returns
+    -------
+    None
+    """
+    try:
+        with open(file_name, "wb") as f:
+            pickle.dump(obj, f)
+        logger.info(f"Object successfully dumped to {file_name}.")
+
+    except FileNotFoundError:
+        logger.exception("File not found during pickling.")
+
+    except PermissionError:
+        logger.exception("Permission error during pickling.")
+
+    except pickle.PickleError:
+        logger.exception("An error occurred while pickling the object.")
+
+    except Exception:
+        logger.exception("An unknown error occurred during pickling.")
 
 
 def unpickle_obj(file_name: str) -> Any:
-    with open(file_name, "rb") as f:
-        logger.info(f"Unpickled {file_name}")
-        return pickle.load(f)
+    """
+    Load a serialized object from a file.
+
+    Parameters
+    ----------
+    file_name : str
+        The name of the file from which the object will be loaded.
+
+    Returns
+    -------
+    Any
+        The unpickled object.
+    """
+    try:
+        with open(file_name, "rb") as f:
+            obj = pickle.load(f)
+        logger.info(f"Object successfully loaded from {file_name}.")
+
+    except FileNotFoundError:
+        logger.exception("File not found during unpickling.")
+
+    except PermissionError:
+        logger.exception("Permission error during unpickling.")
+
+    except pickle.PickleError:
+        logger.exception("An error occurred while unpickling the object.")
+
+    except Exception:
+        logger.exception("An unknown error occurred during unpickling.")
+
+    return obj
 
 
-def obj_sha(o: Any) -> str:
-    """Calculated the SHA256 checksum of an objects data (get using the pickle module)"""
-    return hashlib.sha256(pickle.dumps(o)).hexdigest()
+def obj_sha(obj: Any) -> str | None:
+    """
+    Calculate the SHA256 checksum of an object's serialized data.
 
+    Parameters
+    ----------
+    obj : Any
+        The object for which the SHA256 checksum will be calculated.
 
-def group_by(key_selector: Callable[[T], V], seq: Iterable[T]) -> dict[V, list[T]]:
-    d = defaultdict(list)
-    for i in seq:
-        d[key_selector(i)].append(i)
-    return d
+    Returns
+    -------
+    str
+        The SHA256 checksum of the object's serialized data.
+    """
+    try:
+        return hashlib.sha256(pickle.dumps(obj)).hexdigest()
 
+    except pickle.PickleError:
+        logger.exception("An error occurred while serializing the object for checksum calculation.")
 
-def parse_key_value_tags(tags: list[str]) -> dict[str, str]:
-    splits = [tag.split("=") for tag in tags]
-
-    if any(len(pair) != 2 for pair in splits):
-        raise ValueError(f"All tags shall be in key=value form: tags={tags}")
-
-    if any(len(pair) != 2 for pair in splits):
-        raise ValueError(f"All tag keys shall be unique: tags={tags}")
-
-    return {split[0]: split[1] for split in splits if split[1] != ""}
+    except Exception:
+        logger.exception("An unknown error occurred while calculating the SHA256 checksum.")
+    return None
