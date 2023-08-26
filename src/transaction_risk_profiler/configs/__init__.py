@@ -1,6 +1,7 @@
 """ Configs module. """
 from dotenv import load_dotenv
-from shap_app.configs.settings import Settings
+
+from transaction_risk_profiler.configs.settings import Settings
 
 load_dotenv()
 

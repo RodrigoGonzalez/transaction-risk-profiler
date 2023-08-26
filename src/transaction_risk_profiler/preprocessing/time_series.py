@@ -1,3 +1,4 @@
+""" Time series preprocessing module. """
 from datetime import datetime
 
 
