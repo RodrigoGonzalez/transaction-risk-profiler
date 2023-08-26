@@ -1,9 +1,9 @@
 # Dataset Name
-name: Boston Housing
+name: transactions
 # Dataset Description
-description: Boston Housing Prices
+description: Anonymized transactions labeled as fraudulent or genuine
 # Dataset URL
-url: http://lib.stat.cmu.edu/datasets/boston
+url: ~
 # Dataset License
 license: CC BY-NC-SA
 

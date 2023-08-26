@@ -16,7 +16,7 @@ from yaml import Loader
 from yaml import load
 from yaml import resolver
 
-from transaction_risk_profiler.modeling.build_model import build_model
+from transaction_risk_profiler.modeling.models.build_model import build_model
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -170,6 +170,10 @@ def yaml_ordered_load(stream: Any, object_pairs_hook: Callable = OrderedDict) ->
     -----
     Solution adapted from: https://stackoverflow.com/a/21912744
     """
+    if isinstance(stream, Path):
+        with open(stream) as f:
+            stream = f.read()
+
     ordered_loader = cast(type[Loader], type("OrderedLoader", (Loader,), {}))
     ordered_loader.add_constructor(
         resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_ordered_mapping
@@ -266,4 +270,5 @@ def obj_sha(obj: Any) -> str | None:
 
     except Exception:
         logger.exception("An unknown error occurred while calculating the SHA256 checksum.")
+
     return None

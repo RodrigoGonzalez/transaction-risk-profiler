@@ -9,8 +9,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import BernoulliNB
 
-from transaction_risk_profiler.modeling.baseline import get_probs
 from transaction_risk_profiler.modeling.metrics import cust_eval
+from transaction_risk_profiler.modeling.models.baseline import get_probs
 
 logger = logging.getLogger(__name__)
 

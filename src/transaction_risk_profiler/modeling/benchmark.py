@@ -1,13 +1,16 @@
+""" Benchmarking module for transaction risk profiling. """
+import logging
 from time import time
 
 from sklearn import metrics
 from sklearn.utils.extmath import density
 
-from transaction_risk_profiler.modeling.baseline import X_test
-from transaction_risk_profiler.modeling.baseline import X_train
-from transaction_risk_profiler.modeling.baseline import logger
-from transaction_risk_profiler.modeling.baseline import y_test
-from transaction_risk_profiler.modeling.baseline import y_train
+from transaction_risk_profiler.modeling.models.baseline import X_test
+from transaction_risk_profiler.modeling.models.baseline import X_train
+from transaction_risk_profiler.modeling.models.baseline import y_test
+from transaction_risk_profiler.modeling.models.baseline import y_train
+
+logger = logging.getLogger(__name__)
 
 
 def benchmark_model(clf):
