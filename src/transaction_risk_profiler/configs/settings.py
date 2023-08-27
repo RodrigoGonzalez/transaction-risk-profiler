@@ -1,10 +1,13 @@
 """ Settings for the app. """
+import logging
 from pathlib import Path
 
 from pydantic_settings import BaseSettings
 
 from transaction_risk_profiler import APP_DIR
 from transaction_risk_profiler import PROJECT_DIR
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -33,4 +36,4 @@ class Settings(BaseSettings):
 
 if __name__ == "__main__":
     settings = Settings()
-    print(settings)
+    logger.info(settings)

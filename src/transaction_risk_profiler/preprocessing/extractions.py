@@ -1,4 +1,8 @@
+import logging
+
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def generate_dataframe_from_lists(ticket_types: list[list[dict] | None]) -> pd.DataFrame:
@@ -41,4 +45,4 @@ if __name__ == "__main__":
 
     ticket_types = df.ticket_types.head(10).values
     result_df = generate_dataframe_from_lists(ticket_types)
-    print(result_df)
+    logger.info(result_df)
