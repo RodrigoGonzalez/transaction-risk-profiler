@@ -25,29 +25,107 @@ def get_data(filepath):
 
 
 class Model:
-    def __init__(self):
-        self.vectorizer = TfidfVectorizer(stop_words="english", max_features=1000)
+    """Model for predicting fraudulent transactions."""
+
+    def __init__(self, n_features: int = 1000):
+        """
+        Initialize the Model with a TfidfVectorizer and a RandomForestClassifier.
+
+        Parameters
+        ----------
+        n_features : int, optional
+            The maximum number of features for TfidfVectorizer.
+            Defaults to 1000.
+        """
+        self.vectorizer = TfidfVectorizer(stop_words="english", max_features=n_features)
         self.model = RandomForestClassifier()
 
     @staticmethod
-    def get_description(html):
+    def get_description(html: str) -> str:
+        """
+        Extract and return text from HTML.
+
+        Parameters
+        ----------
+        html : str
+            The HTML content.
+
+        Returns
+        -------
+        str
+            The extracted text.
+        """
         return BeautifulSoup(html).text
 
-    def get_descriptions(self, df: pd.DataFrame):
+    def get_descriptions(self, df: pd.DataFrame) -> pd.Series:
+        """
+        Apply text extraction to a DataFrame column.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The DataFrame containing HTML descriptions.
+
+        Returns
+        -------
+        pd.Series
+            Series with extracted text.
+        """
         return df["description"].apply(self.get_description)
 
-    def fit(self, df: pd.DataFrame):
-        logger.info("vectorizing...")
+    def fit(self, df: pd.DataFrame) -> "Model":
+        """
+        Fit the model to a DataFrame.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The DataFrame to fit.
+
+        Returns
+        -------
+        Model
+            The fitted model.
+        """
+        logger.info("Vectorizing...")
         X = self.vectorizer.fit_transform(self.get_descriptions(df)).toarray()
-        logger.info("building model...")
+
+        logger.info("Building model...")
         self.model.fit(X, df["target"].values)
+
         return self
 
-    def predict(self, df: pd.DataFrame):
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
+        """
+        Predict the target for a DataFrame.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The DataFrame for which to predict targets.
+
+        Returns
+        -------
+        np.ndarray
+            The predicted targets.
+        """
         X = self.vectorizer.transform(self.get_descriptions(df)).toarray()
         return self.model.predict(X)
 
-    def predict_one(self, series):
+    def predict_one(self, series: pd.Series) -> int:
+        """
+        Predict the target for a single series.
+
+        Parameters
+        ----------
+        series : pd.Series
+            The series for which to predict the target.
+
+        Returns
+        -------
+        int
+            The predicted target.
+        """
         descriptions = [self.get_description(series["description"])]
         data = self.vectorizer.transform(descriptions).toarray()
         return self.model.predict(data)[0]
