@@ -1,14 +1,23 @@
+""" This module contains the DatasetTransporter class.
+
+To run this module independently, use the following command:
+python src/transaction_risk_profiler/io/dataset_transporter.py
+"""
+import logging
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from attrs import define
 from attrs import field
+from strictyaml import YAML
 
-from transaction_risk_profiler.io.loaders import unpickle_obj
+from transaction_risk_profiler.configs import settings
+from transaction_risk_profiler.configs.dataset_config import DatasetCardConfig
+from transaction_risk_profiler.io.dataset_utils import fetch_dataset_card
+from transaction_risk_profiler.io.dataset_utils import split_data_with_id_hash
 
-# columns_enum = DataColumnsEnum()
-# dataset_config = DatasetCardConfig(**dataset_card.data)
+logger = logging.getLogger(__name__)
 
 
 @define
@@ -22,21 +31,33 @@ class DataTransporter:
     _filename: str
     _test_ratio: float = 0.2
     _holdout_ratio: float | None = 0.0
+    _dataset_card_filename: str | None = None
+
     df: pd.DataFrame = field(init=False)
     df_train: pd.DataFrame = field(init=False)
     df_test: pd.DataFrame = field(init=False)
     df_holdout: pd.DataFrame | None = field(init=False)
+
     df_train_id: pd.Series = field(init=False)
     df_test_id: pd.Series = field(init=False)
     df_holdout_id: pd.Series | None = field(init=False)
+
     y: np.ndarray = field(init=False)
     X: np.ndarray = field(init=False)
     X_pred: np.ndarray = field(init=False)
-    all_features: pd.Index = field(init=False)
 
-    def __post_init__(self):
-        self.load_data(self.filename)
-        self.unpack()
+    dataset_card: YAML | None = field(init=False)
+    dataset_config: DatasetCardConfig | None = field(init=False)
+    datetime_features: list[str] | None = field(init=False, factory=list)
+    hash_column: str | None = field(init=False)
+
+    def __attrs_post_init__(self):
+        """Post init method."""
+        if self._dataset_card_filename:
+            self.load_dataset_card(self._dataset_card_filename)
+            self.load_dataset_config(self.dataset_card)
+
+        self.load_data()
 
     @property
     def filename(self) -> str:
@@ -49,6 +70,44 @@ class DataTransporter:
             The filename.
         """
         return self._filename
+
+    def load_dataset_card(self, dataset_card_filename: str | None = None) -> None:
+        """
+        Load the dataset card.
+
+        Parameters
+        ----------
+        dataset_card_filename : str
+            The dataset card filename.
+
+        Returns
+        -------
+        None
+        """
+        if dataset_card_filename or self._dataset_card_filename:
+            self.dataset_card = fetch_dataset_card(
+                dataset_card_filename=dataset_card_filename or self._dataset_card_filename
+            )
+
+    def load_dataset_config(self, dataset_card: YAML | None = None) -> None:
+        """
+        Load the dataset config.
+
+        Parameters
+        ----------
+        dataset_card : YAML
+            The dataset card.
+
+        Returns
+        -------
+        None
+        """
+        if bool(dataset_card.data):
+            self.dataset_card = dataset_card
+
+        if bool(self.dataset_card.data):
+            self.dataset_config = DatasetCardConfig(**self.dataset_card.data)
+            self.datetime_features = self.dataset_config.datetime_features or []
 
     def load_full_dataset(self) -> pd.DataFrame:
         """
@@ -69,37 +128,65 @@ class DataTransporter:
             raise OSError(f"Dataset {self.filename} not found.")
 
         if self.filename.endswith(".csv"):
-            return pd.read_csv(self.filename)
+            return pd.read_csv(self.filename, parse_dates=self.datetime_features)
+
         elif self.filename.endswith(".json"):
-            return pd.read_json(self.filename)
-        elif self.filename.endswith(".pkl"):
-            return unpickle_obj(self.filename)
+            df = pd.read_json(self.filename)
+            df[self.datetime_features] = df[self.datetime_features].apply(pd.to_datetime)
+            return df
 
         raise TypeError(f"Dataset file type {self.filename.split('.')[-1]} not supported.")
 
-    def load_data(self, filename: str | None) -> None:
+    def load_data(self, filename: str | None = None, hash_column: str | None = "index") -> None:
         """
-        Load data from the given CSV file into Pandas DataFrames and NumPy arrays.
+        Load data from the given file into Pandas DataFrames and NumPy arrays.
 
         Parameters
         ----------
-        filename : str
-            The path to the CSV file containing the data.
+        filename : Optional[str]
+            The path to the file containing the data.
+
+        hash_column : str
+            The column to use for hashing.
 
         Returns
         -------
         None
         """
-        print("\nLoading Data")
         self._filename = filename or self.filename
         self.df = self.load_full_dataset()
-        self.df_train = self.df.loc[:249, "var_1":"var_300"]
-        self.df_test = self.df.loc[250:, "var_1":"var_300"]
-        self.df_train_id = self.df.loc[:249, "id"]
-        self.df_test_id = self.df.loc[250:, "id"]
-        self.y = self.df.loc[:249, "target_eval"].values
-        self.X = self.df_train.values
-        self.X_pred = self.df_test.values
+
+        assert not self.df.empty, "No data was loaded, cannot proceed further."
+
+        if not self.dataset_config:
+            self.hash_column = "index"
+        else:
+            self.hash_column = self.dataset_config.id_column or hash_column
+
+        if self.hash_column == "index":
+            self.df.reset_index(inplace=True)
+
+        # Unpacking the data
+        self.unpack()
+
+        if not self.dataset_config:
+            columns_to_drop = []
+        else:
+            columns_to_drop = self.dataset_config.features_to_drop or []
+
+        if "index" in self.df_train:
+            columns_to_drop.append("index")
+
+        self.df_train = self.df_train.reset_index(drop=True).drop(columns=columns_to_drop)
+        self.df_test = self.df_test.reset_index(drop=True).drop(columns=columns_to_drop)
+        if self.df_holdout is not None:
+            self.df_holdout = self.df_holdout.reset_index(drop=True).drop(columns=columns_to_drop)
+
+        # Extracting features and labels
+        feature_columns = [cols for cols in self.df.columns if cols not in columns_to_drop]
+        self.X = self.df_train[feature_columns].values
+        self.X_pred = self.df_test[feature_columns].values
+        self.y = self.df_train[self.dataset_config.target].values
 
     def unpack(self):
         """
@@ -109,8 +196,18 @@ class DataTransporter:
         -------
         None
         """
-        print("\nLoading Data")
-        self.all_features = self.df_train.columns.unique()
+        # Using split_data_with_id_hash to split data
+        self.df_train, self.df_test, self.df_holdout = split_data_with_id_hash(
+            self.df, self._test_ratio, self.hash_column, self._holdout_ratio
+        )
+
+        # Extracting IDs
+        self.df_train_id = self.df_train[self.hash_column]
+        self.df_test_id = self.df_test[self.hash_column]
+        self.df_holdout_id = (
+            self.df_holdout[self.hash_column] if self.df_holdout is not None else None
+        )
+        # self.all_features = self.df_train.columns.unique()
 
     def update_data(self, features: list[str]):
         """
@@ -128,3 +225,14 @@ class DataTransporter:
         self.df_train = self.df_train[features]
         self.df_test = self.df_test[features]
         self.X_pred = self.df_test.values
+
+
+if __name__ == "__main__":
+    # from transaction_risk_profiler.io import DataTransporter
+
+    dt = DataTransporter(
+        filename=f"{settings.PROJECT_DIRECTORY}/data/transactions_subset.json",
+        test_ratio=0.2,
+        holdout_ratio=0.1,
+        dataset_card_filename="dataset_card.yml",
+    )

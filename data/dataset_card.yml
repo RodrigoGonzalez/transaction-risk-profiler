@@ -8,40 +8,114 @@ url: ~
 license: CC BY-NC-SA
 
 # Variables
-target: MEDV
+target: acct_type
+
+# Dataset ID column
+id_column: index
+
+features:
+  - approx_payout_date
+  - body_length
+  - channels
+  - country
+  - currency
+  - delivery_method
+  - description
+  - email_domain
+  - event_created
+  - event_end
+  - event_published
+  - event_start
+  - fb_published
+  - gts
+  - has_analytics
+  - has_header
+  - has_logo
+  - listed
+  - name
+  - name_length
+  - num_order
+  - num_payouts
+  - object_id
+  - org_desc
+  - org_facebook
+  - org_name
+  - org_twitter
+  - payee_name
+  - payout_type
+  - previous_payouts
+  - sale_duration
+  - sale_duration2
+  - show_map
+  - ticket_types
+  - user_age
+  - user_created
+  - user_type
+  - venue_address
+  - venue_country
+  - venue_latitude
+  - venue_longitude
+  - venue_name
+  - venue_state
 
 features_to_rename:
-  MEDV: TARGET
-
-# Features
-features:
-  - CRIM
-  - ZN
-  - INDUS
-  - CHAS
-  - NOX
-  - RM
-  - AGE
-  - DIS
-  - RAD
-  - TAX
-  - PTRATIO
-  - B
-  - LSTAT
+  acct_type: target
 
 numerical_features:
-  - CRIM
-  - ZN
-  - INDUS
-  - NOX
-  - RM
-  - AGE
-  - DIS
-  - RAD
-  - TAX
-  - PTRATIO
-  - B
-  - LSTAT
+  - body_length
+  - gts
+  - name_length
+  - num_order
+  - num_payouts
+  - org_facebook
+  - org_twitter
+  - sale_duration
+  - sale_duration2
+  - user_age
 
 binary_features:
-  - CHAS
+  - fb_published
+  - has_analytics
+  - has_header
+  - has_logo
+  - listed
+  - show_map
+
+categorical_features:
+  - channels
+  - country
+  - currency
+  - delivery_method
+  - payout_type
+
+datetime_features:
+  - approx_payout_date
+  - event_created
+  - event_end
+  - event_published
+  - event_start
+  - user_created
+
+geospatial_features:
+  - venue_latitude
+
+text_features:
+  - country
+  - currency
+  - description
+  - email_domain
+  - name
+  - org_desc
+  - org_name
+  - payee_name
+  - venue_address
+  - venue_country
+  - venue_name
+  - venue_state
+
+list_features:
+  - previous_payouts
+  - ticket_types
+
+features_to_drop:
+  - object_id

@@ -1,4 +1,5 @@
 """ Utility functions for the pipelines. """
+import hashlib
 import logging
 from enum import Enum
 from pathlib import Path
@@ -23,6 +24,37 @@ class DatasetSplitRatioError(ValueError):
     def __init__(self, ratio_type: str, ratio: float):
         """Initialize the exception."""
         super().__init__(f"{ratio_type} ratio must be between 0 and 1, got {ratio}")
+
+
+def is_id_in_set_sha256(identifier: int, ratio: float, offset: float = 0.0) -> bool:
+    """
+    Determine if an identifier should belong to a particular dataset set (test or holdout).
+
+    Parameters
+    ----------
+    identifier : int
+        The identifier to hash.
+    ratio : float
+        The ratio of the set.
+    offset : float
+        Offset to apply for selecting a different set.
+
+    Returns
+    -------
+    bool
+        True if the identifier should be in the set, False otherwise.
+    """
+    sha256 = hashlib.sha256()
+    sha256.update(str(identifier).encode("utf-8"))
+    hashed_id = int(sha256.hexdigest(), 16)
+
+    if ratio + offset > 0.75:
+        logger.warning(
+            f"Test ratio and holdout ratio are > 0.75: {ratio + offset}. This "
+            f"leaves {1 - ratio - offset} data for training."
+        )
+
+    return 2**256 * offset <= hashed_id < 2**256 * (offset + ratio)
 
 
 def is_id_in_set(identifier: int, ratio: float, offset: float = 0.0) -> bool:
@@ -100,9 +132,6 @@ def split_data_with_id_hash(
     else:
         holdout_data = None
 
-    if id_column == "index":
-        data.drop(id_column, axis=1, inplace=True)
-
     return data.loc[in_train_set], data.loc[in_test_set], holdout_data
 
 
@@ -120,6 +149,9 @@ def fetch_dataset_card(
         dataset_card_path = Path(
             f"{settings.PROJECT_DIRECTORY}/{settings.DATASET_DIRECTORY}/{dataset_card_filename}"
         )
+
+    if isinstance(dataset_card_path, str):
+        dataset_card_path = Path(dataset_card_path)
 
     if not dataset_card_path.is_file():
         raise OSError(f"Did not find config file at path: {dataset_card_path}")
@@ -174,20 +206,18 @@ if __name__ == "__main__":
         target=DataColumnsEnum.get_target(),
         features=DataColumnsEnum.get_feature_names(),
         id_column="object_id",
-        features_to_rename={"MEDV": "TARGET"},
+        features_to_rename={DataColumnsEnum.get_target(): "target"},
         numerical_features=[
-            "CRIM",
-            "ZN",
-            "INDUS",
-            "NOX",
-            "RM",
-            "AGE",
-            "DIS",
-            "RAD",
-            "TAX",
-            "PTRATIO",
-            "B",
-            "LSTAT",
+            "body_length",
+            "gts",
+            "name_length",
+            "num_order",
+            "num_payouts",
+            "org_facebook",
+            "org_twitter",
+            "sale_duration",
+            "sale_duration2",
+            "user_age",
         ],
         categorical_features=[
             "channels",
@@ -196,7 +226,14 @@ if __name__ == "__main__":
             "delivery_method",
             "payout_type",
         ],
-        binary_features=["fb_published", "has_analytics", "has_header", "has_logo", "listed"],
+        binary_features=[
+            "fb_published",
+            "has_analytics",
+            "has_header",
+            "has_logo",
+            "listed",
+            "show_map",
+        ],
         datetime_features=[
             "approx_payout_date",
             "event_created",
@@ -207,15 +244,20 @@ if __name__ == "__main__":
         ],
         geo_features=["venue_latitude", "venue_longitude"],
         text_features=[
+            "country",
+            "currency",
             "description",
             "email_domain",
             "name",
             "org_desc",
+            "org_name",
             "payee_name",
             "venue_address",
+            "venue_country",
+            "venue_name",
+            "venue_state",
         ],
+        list_features=["previous_payouts", "ticket_types"],
     )
 
     save_as_yaml(dataset_config_example, "data/dataset_card_save.yml")
-
-    pd.read_json()

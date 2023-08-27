@@ -170,7 +170,9 @@ def yaml_ordered_load(stream: Any, object_pairs_hook: Callable = OrderedDict) ->
     -----
     Solution adapted from: https://stackoverflow.com/a/21912744
     """
+
     if isinstance(stream, Path):
+        stream.resolve()
         with open(stream) as f:
             stream = f.read()
 
