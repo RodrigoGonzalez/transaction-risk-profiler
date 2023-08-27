@@ -1,12 +1,45 @@
-""" Simple feature engineering transforms. """
+"""Module for simple feature engineering transforms.
+
+This module provides functions for performing simple transformations on pandas
+DataFrames. These transformations include filling NA values, creating mismatched
+country columns, creating feature columns, and calculating the proportion of
+non-empty cells.
+"""
+
 import pandas as pd
 
 
-def fill_na_with_value(df: pd.DataFrame, column: str, value) -> None:
+def fill_na_with_value(df: pd.DataFrame, column: str, value: int | str) -> None:
+    """Fill NA/NaN values in a specified column of a DataFrame with a given value.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to update.
+    column : str
+        The name of the column to fill NA/NaN values in.
+    value : Union[int, str]
+        The value to fill NA/NaN values with.
+    """
     df[column].fillna(value=value, inplace=True)
 
 
 def mismatch_country(df: pd.DataFrame, new_column: str, column_1: str, column_2: str) -> None:
+    """
+    Create a new column in the DataFrame indicating whether the values in
+    two other columns match.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to update.
+    new_column : str
+        The name of the new column to create.
+    column_1 : str
+        The name of the first column to compare.
+    column_2 : str
+        The name of the second column to compare.
+    """
     df[new_column] = df[column_1] != df[column_2]
 
 
@@ -27,11 +60,6 @@ def create_feature_columns(
         The prefix to use for the new column names.
     feature_name : str
         The name of the feature column to process.
-
-    Returns
-    -------
-    None
-        Updates the DataFrame in place.
     """
     for value in feature_values:
         new_column_name = f"{column_prefix}_{value}"
@@ -39,22 +67,19 @@ def create_feature_columns(
 
 
 def proportion_non_empty(cells: list[dict], field_name: str = "address") -> float:
-    """
-    Calculate the proportion of cells with non-empty 'address' fields.
+    """Calculate the proportion of cells with non-empty fields.
 
     Parameters
     ----------
-    cells : list[dict[str, str]]
+    cells : List[dict]
         A list of dictionaries, each containing an 'address' field.
     field_name : str, optional
         The field to check for non-empty values. Default is 'address'.
 
-
-
     Returns
     -------
     float
-        The proportion of cells with non-empty 'address' fields.
+        The proportion of cells with non-empty fields.
     """
     total_cells = len(cells)
 
