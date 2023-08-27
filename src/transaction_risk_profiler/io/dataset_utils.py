@@ -200,6 +200,34 @@ def save_as_yaml(dataset_config: DatasetCardConfig, file_path: str):
         yaml.dump(final_config, f, default_flow_style=False, sort_keys=False)
 
 
+def fill_nans(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fill NaN values in a DataFrame based on the data type of each column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame with NaN values.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with NaN values filled.
+    """
+
+    def filler(col):
+        if col.hasnans:
+            if col.dtype == "int64":
+                return col.fillna(-999)
+            elif col.dtype == "float64":
+                return col.fillna(-999.0)
+            elif col.dtype == "O":
+                return col.fillna("None")
+        return col
+
+    return df.apply(filler)
+
+
 if __name__ == "__main__":
     # Example usage
     dataset_config_example = DatasetCardConfig(
