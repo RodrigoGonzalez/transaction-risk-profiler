@@ -36,7 +36,13 @@ class DatasetCardConfig(BaseModel):
         The list of features to encode in the dataset.
     """
 
+    name: str | None = ""
+    description: str | None = ""
+    url: str | None = ""
+    license: str | None = ""
+
     target: str
+    id_column: str
     features: list[str]
     features_to_rename: dict[str, str] | None = None
     numerical_features: list[str] | None = None
@@ -45,5 +51,6 @@ class DatasetCardConfig(BaseModel):
     datetime_features: list[str] | None = None
     geospatial_features: list[str] | None = None
     text_features: list[str] | None = None
+    list_features: list[str] | None = None
     features_to_drop: list[str] | None = None
     features_to_encode: list[str] | None = None

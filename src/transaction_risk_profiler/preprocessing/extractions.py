@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def generate_dataframe_from_list(ticket_types: list[list[dict] | None]) -> pd.DataFrame:
+def generate_dataframe_from_lists(ticket_types: list[list[dict] | None]) -> pd.DataFrame:
     """
     Generate a DataFrame from a list of ticket types.
 
@@ -10,12 +10,10 @@ def generate_dataframe_from_list(ticket_types: list[list[dict] | None]) -> pd.Da
     pd.DataFrame
         A DataFrame where each row represents a ticket type.
     """
-    # Initialize an empty list to store individual ticket dictionaries
     ticket_data = []
 
-    # Loop through each tickets list in ticket_types
     for tickets in ticket_types:
-        if not tickets:  # Check if the tickets list is not empty or None
+        if not tickets:
             continue
         ticket_data.extend(iter(tickets))
     return pd.DataFrame(ticket_data)
@@ -42,5 +40,5 @@ if __name__ == "__main__":
     )
 
     ticket_types = df.ticket_types.head(10).values
-    result_df = generate_dataframe_from_list(ticket_types)
+    result_df = generate_dataframe_from_lists(ticket_types)
     print(result_df)
