@@ -2,10 +2,12 @@
 import json
 import logging
 import pickle
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.base import ClassifierMixin
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -21,7 +23,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 
 from transaction_risk_profiler.eda.dependency_plots import partial_dependency_plots
-from transaction_risk_profiler.io.dataset_utils import fill_nans
 from transaction_risk_profiler.modeling.benchmark import benchmark_model
 
 logger = logging.getLogger(__name__)
@@ -44,9 +45,9 @@ def make_partial_dependency_plots(
     folder : str
         Directory where to save the plots.
     """
-    print("Generating partial dependency plots...")
+    logger.info("Generating partial dependency plots...")
     [partial_dependency_plots(model, col, data_frame, folder) for col in cols]
-    print("Partial dependency plots generated.")
+    logger.info("Partial dependency plots generated.")
 
 
 def get_data() -> pd.DataFrame:
@@ -58,9 +59,9 @@ def get_data() -> pd.DataFrame:
     pd.DataFrame
         Preprocessed data.
     """
-    print("Fetching and preprocessing data...")
+    logger.info("Fetching and preprocessing data...")
     # ... (Your existing preprocessing code here)
-    print("Data fetched and preprocessed.")
+    logger.info("Data fetched and preprocessed.")
     return pd.DataFrame()  # Replace this with your actual DataFrame
 
 
@@ -80,9 +81,9 @@ def get_top_features(vectorizer: TfidfVectorizer, matrix: np.ndarray) -> np.ndar
     np.ndarray
         Sorted array of top features.
     """
-    print("Getting top features...")
+    logger.info("Getting top features...")
     # ... (Your existing code for getting top features)
-    print("Top features obtained.")
+    logger.info("Top features obtained.")
     return np.array([])  # Replace this with your actual top features array
 
 
@@ -104,9 +105,9 @@ def get_fraud_features(top_fraud: list[str], top_desc: list[str], limit: int) ->
     list[str]
         list of top fraud features that are not in the top description features.
     """
-    print("Filtering top fraud features...")
+    logger.info("Filtering top fraud features...")
     # ... (Your existing code for filtering top fraud features)
-    print("Filtered top fraud features obtained.")
+    logger.info("Filtered top fraud features obtained.")
     return []  # Replace this with your actual filtered top fraud features
 
 
@@ -119,9 +120,9 @@ def create_vocab(df: pd.DataFrame) -> None:
     df : pd.DataFrame
         DataFrame containing text data.
     """
-    print("Creating vocabulary...")
+    logger.info("Creating vocabulary...")
     # ... (Your existing code for creating vocabulary)
-    print("Vocabulary created and saved.")
+    logger.info("Vocabulary created and saved.")
 
 
 def read_fraud_vocab(f_name: str) -> list[str]:
@@ -138,10 +139,10 @@ def read_fraud_vocab(f_name: str) -> list[str]:
     list[str]
         list of fraud words.
     """
-    print("Reading fraud vocabulary...")
+    logger.info("Reading fraud vocabulary...")
     with open(f_name) as f:
         fraud = json.load(f)
-    print("Fraud vocabulary read.")
+    logger.info("Fraud vocabulary read.")
     return fraud["fraud"]
 
 
@@ -166,14 +167,14 @@ def get_probs(
     pd.Series
         Probabilities of the positive class.
     """
-    print("Training Bernoulli Naive Bayes classifier...")
+    logger.info("Training Bernoulli Naive Bayes classifier...")
     clf.fit(X, y)
     with open("BernoulliNB.pkl", "wb") as f:
         pickle.dump(clf, f)
-    print("Model trained and saved as 'BernoulliNB.pkl'.")
+    logger.info("Model trained and saved as 'BernoulliNB.pkl'.")
 
     probs = clf.predict_proba(X)[:, 1]
-    print("Probabilities computed.")
+    logger.info("Probabilities computed.")
     return pd.Series(probs)
 
 
@@ -206,42 +207,129 @@ def plotter(results):
     plt.show()
 
 
-# for penalty in ["l2", "l1"]:
-#     print('=' * 80)
-#     print("%text penalty" % penalty.upper())
-#     # Train Liblinear model
-#     results.append(benchmark_model(LinearSVC(loss='l2', penalty=penalty,
-#                                             dual=False, tol=1e-3)))
-#
-#     # Train SGD model
-#     results.append(benchmark_model(SGDClassifier(alpha=.0001, n_iter=50,
-#                                            penalty=penalty)))
-#
-# print('=' * 80)
-# print("LinearSVC with L1-based feature selection")
-# # The smaller C, the stronger the regularization.
-# # The more regularization, the more sparsity.
-# results.append(benchmark_model(Pipeline([
-#   ('feature_selection', LinearSVC(penalty="l1", dual=False, tol=1e-3)),
-#   ('classification', LinearSVC())
-# ])))
+def read_dataframe_from_pickle(file_path: str) -> pd.DataFrame:
+    """
+    Read a DataFrame from a pickle file.
 
-if __name__ == "__main__":
-    # df = get_data()
-    # df.to_pickle("data/df.pickle")
-    df = pd.read_pickle("data/df.pickle")
+    Parameters
+    ----------
+    file_path : str
+        The path to the pickle file.
 
-    # df = pd.read_pickle('trim_df.pickle')
+    Returns
+    -------
+    pd.DataFrame
+        The DataFrame read from the pickle file.
+    """
+    return pd.read_pickle(file_path)
+
+
+def create_feature_matrix(
+    df: pd.DataFrame, column_name: str, vocab: list[str] = None
+) -> tuple[Any, pd.Series]:
+    """
+    Create a feature matrix using TfidfVectorizer.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame containing the text data.
+    column_name : str
+        The name of the DataFrame column to use for the feature matrix.
+    vocab : List[str], optional
+        The vocabulary to use for vectorization.
+
+    Returns
+    -------
+    Tuple[Any, pd.Series]
+        The feature matrix and the target vector.
+    """
+    vectorizer = TfidfVectorizer(stop_words="english", vocabulary=vocab)
+    matrix = vectorizer.fit_transform(df[column_name])
+    target_vector = df["acct_type"].str.contains("fraud")
+    return matrix.todense(), target_vector
+
+
+def load_model(file_path: str) -> ClassifierMixin:
+    """
+    Load a model from a pickle file.
+
+    Parameters
+    ----------
+    file_path : str
+        The path to the pickle file.
+
+    Returns
+    -------
+    ClassifierMixin
+        The model loaded from the pickle file.
+    """
+    with open(file_path, "rb") as f:
+        model = pickle.load(f)
+    return model
+
+
+def fill_missing_values(df: pd.DataFrame, columns: list[str]) -> None:
+    """
+    Fill missing values in specified columns of a DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame.
+    columns : List[str]
+        The list of columns to fill.
+
+    Returns
+    -------
+    None
+    """
+    # Fill missing values here (this is just a placeholder)
+
+
+def train_and_evaluate_classifiers(
+    X_train: Any,
+    X_test: Any,
+    y_train: pd.Series,
+    y_test: pd.Series,
+    classifiers: list[tuple[ClassifierMixin, str]],
+) -> list[Any]:
+    """
+    Train and evaluate multiple classifiers.
+
+    Parameters
+    ----------
+    X_train : Any
+        The training feature matrix.
+    X_test : Any
+        The testing feature matrix.
+    y_train : pd.Series
+        The training target vector.
+    y_test : pd.Series
+        The testing target vector.
+    classifiers : List[Tuple[ClassifierMixin, str]]
+        The list of classifiers and their names.
+
+    Returns
+    -------
+    List[Any]
+        A list of results for each classifier.
+    """
+    results = []
+    for clf, name in classifiers:
+        logger.info("=" * 80)
+        logger.info(name)
+        results.append(benchmark_model(clf, X_train, y_train, X_test, y_test))
+    return results
+
+
+# Main function to tie it all together
+def main():
+    df = read_dataframe_from_pickle("data/df.pickle")
     create_vocab(df)
     fraud_vocab = read_fraud_vocab("fraud_vocab.json")
-    vectorizer = TfidfVectorizer(stop_words="english")  # , vocabulary=fraud_vocab)
-    matrix = vectorizer.fit_transform(df["clean_description"])
-    Xm = matrix.todense()
-    ym = df["acct_type"].str.contains("fraud")
-
-    with open("BernoulliNB.pkl") as f_un:
-        Bayes = pickle.load(f_un)
-
+    Xm, ym = create_feature_matrix(df, "clean_description", fraud_vocab)
+    Bayes = load_model("BernoulliNB.pkl")
     bayes_mod = get_probs(Bayes, Xm, ym)
     df["bayes_mod"] = bayes_mod
 
@@ -296,15 +384,14 @@ if __name__ == "__main__":
         "org_link_count",
         "bayes_mod",
     ]
-    fill_nans(df)
-    # y = df['fraud'].values
+
+    fill_missing_values(df, included_cols)
     y = df["acct_type"].str.contains("fraud")
     X = df[included_cols].values
 
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    results = []
-    for clf, name in (
+    classifiers = [
         (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
         (Perceptron(max_iter=50), "Perceptron"),
         (PassiveAggressiveClassifier(max_iter=50), "Passive-Aggressive"),
@@ -337,8 +424,10 @@ if __name__ == "__main__":
             "GradientBoostingClassifier",
         ),
         (AdaBoostClassifier(n_estimators=5000), "AdaBoostClassifier"),
-    ):
-        logger.info("=" * 80)
-        logger.info(name)
-        results.append(benchmark_model(clf))
+    ]
+    results = train_and_evaluate_classifiers(X_train, X_test, y_train, y_test, classifiers)
     plotter(results)
+
+
+if __name__ == "__main__":
+    main()

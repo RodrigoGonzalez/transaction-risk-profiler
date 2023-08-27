@@ -1,3 +1,4 @@
+import logging
 import pickle
 
 import pandas as pd
@@ -12,6 +13,8 @@ from transaction_risk_profiler.feature_engineering.categorical import create_bin
 from transaction_risk_profiler.feature_engineering.simple_transforms import fill_na_with_value
 from transaction_risk_profiler.feature_engineering.simple_transforms import mismatch_country
 from transaction_risk_profiler.feature_engineering.simple_transforms import proportion_non_empty
+
+logger = logging.getLogger(__name__)
 
 
 def load_clean_data(filename, training=False):
@@ -173,8 +176,8 @@ def make_model(X, y, thresh=0.14):
     preds = probs >= thresh
     recall = recall_score(y_test, preds)
     precision = precision_score(y_test, preds)
-    print("Recall = ", recall)
-    print("Precision = ", precision)
+    logger.info("Recall = ", recall)
+    logger.info("Precision = ", precision)
     return clf
 
 
