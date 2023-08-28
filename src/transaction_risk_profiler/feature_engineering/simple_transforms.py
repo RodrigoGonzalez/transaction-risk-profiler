@@ -99,15 +99,90 @@ def convert_float_to_int(x: float | Any) -> int | Any:
     Parameters
     ----------
     x : float or any
-        The value to be converted to integer if it is a float.
+        The value to be converted to integer if column value contains a float.
 
     Returns
     -------
     int or same type as input
-        The integer representation of the float if input is a float and not NaN,
-        otherwise returns the input as is.
+        The integer representation of the float if the input contains a float
+        and not NaN, otherwise returns the input without modification.
     """
     if isinstance(x, float):
         return x if np.isnan(x) else int(x)
     else:
         return x
+
+
+def add_mismatch_column(
+    df: pd.DataFrame, main_column: str, secondary_column: str, new_col_name: str
+) -> pd.DataFrame:
+    """
+    Add a column to Pandas' DataFrame indicating whether a main_column and
+    secondary_column contain different values.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to modify.
+    main_column : str
+        The name of the column containing main column information.
+    secondary_column : str
+        The name of the column containing comparison column information.
+    new_col_name : str
+        The name of the new column to add.
+
+    Returns
+    -------
+    pd.DataFrame
+        Modified DataFrame with the new column.
+    """
+    df[new_col_name] = df[main_column] != df[secondary_column]
+    return df
+
+
+def add_is_specific_value(df: pd.DataFrame, main_column: str, column_values: list) -> pd.DataFrame:
+    """
+    Add columns to DataFrame indicating whether the country matches specific
+    column values.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to modify.
+    main_column : str
+        The name of the column containing main column information.
+    column_values : list
+        A list of values to check for.
+
+    Returns
+    -------
+    pd.DataFrame
+        Modified DataFrame with the new columns.
+    """
+    for column_value in column_values:
+        new_col_name = f"is_{column_value.lower()}"
+        df[new_col_name] = df[main_column] == column_value
+    return df
+
+
+def add_is_blank_column(df: pd.DataFrame, main_column: str, new_col_name: str) -> pd.DataFrame:
+    """
+    Add a column to Pandas' DataFrame indicating whether the column entry is
+    blank.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to modify.
+    main_column : str
+        The name of the column containing column value information.
+    new_col_name : str
+        The name of the new column to add.
+
+    Returns
+    -------
+    pd.DataFrame
+        Modified DataFrame with the new column.
+    """
+    df[new_col_name] = df[main_column] == ""
+    return df
