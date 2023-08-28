@@ -71,6 +71,18 @@ class DataTransporter:
         """
         return self._filename
 
+    @property
+    def base_filename(self) -> str:
+        """
+        Return the base filename.
+
+        Returns
+        -------
+        str
+            The filename.
+        """
+        return self._filename.split("/")[-1].split(".")[0]
+
     def load_dataset_card(self, dataset_card_filename: str | None = None) -> None:
         """
         Load the dataset card.
@@ -131,9 +143,7 @@ class DataTransporter:
             return pd.read_csv(self.filename, parse_dates=self.datetime_features)
 
         elif self.filename.endswith(".json"):
-            df = pd.read_json(self.filename)
-            df[self.datetime_features] = df[self.datetime_features].apply(pd.to_datetime)
-            return df
+            return pd.read_json(self.filename)
 
         raise TypeError(f"Dataset file type {self.filename.split('.')[-1]} not supported.")
 
@@ -226,13 +236,48 @@ class DataTransporter:
         self.df_test = self.df_test[features]
         self.X_pred = self.df_test.values
 
+    def save_data(
+        self,
+        base_filename: str | None = None,
+        directory: str | None = f"{settings.PROJECT_DIRECTORY}/{settings.DATASET_DIRECTORY}",
+        file_type: str | None = "json",
+    ) -> None:
+        """
+        Save the data to the specified directory.
+
+        Parameters
+        ----------
+        base_filename : str
+            The base filename to save the data to.
+        directory : str
+            The directory to save the data to.
+        file_type : str
+            The file type to save the data as. Defaults to JSON.
+
+        Returns
+        -------
+        None
+        """
+        if not base_filename:
+            base_filename = self.base_filename
+
+        if file_type != "json":
+            raise TypeError(f"File type {file_type} not supported.")
+
+        full_base_filename = f"{directory}/{base_filename}"
+        self.df_train.to_json(f"{full_base_filename}_train.{file_type}")
+        self.df_test.to_json(f"{full_base_filename}_test.{file_type}")
+        if self.df_holdout is not None:
+            self.df_holdout.to_json(f"{full_base_filename}_holdout.{file_type}")
+
 
 if __name__ == "__main__":
     # from transaction_risk_profiler.io import DataTransporter
 
     dt = DataTransporter(
-        filename=f"{settings.PROJECT_DIRECTORY}/data/transactions_subset.json",
+        filename=f"{settings.PROJECT_DIRECTORY}/data/transactions.json",
         test_ratio=0.2,
         holdout_ratio=0.1,
         dataset_card_filename="dataset_card.yml",
     )
+    dt.save_data()

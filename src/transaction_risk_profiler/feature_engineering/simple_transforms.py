@@ -5,7 +5,9 @@ DataFrames. These transformations include filling NA values, creating mismatched
 country columns, creating feature columns, and calculating the proportion of
 non-empty cells.
 """
+from typing import Any
 
+import numpy as np
 import pandas as pd
 
 
@@ -88,3 +90,24 @@ def proportion_non_empty(cells: list[dict], field_name: str = "address") -> floa
 
     non_empty_addresses = sum(bool(cell[field_name].strip()) for cell in cells)
     return 1 - (non_empty_addresses / float(total_cells))
+
+
+def convert_float_to_int(x: float | Any) -> int | Any:
+    """
+    Convert float to integer, while keeping NaNs unchanged.
+
+    Parameters
+    ----------
+    x : float or any
+        The value to be converted to integer if it is a float.
+
+    Returns
+    -------
+    int or same type as input
+        The integer representation of the float if input is a float and not NaN,
+        otherwise returns the input as is.
+    """
+    if isinstance(x, float):
+        return x if np.isnan(x) else int(x)
+    else:
+        return x

@@ -5,18 +5,44 @@ from matplotlib import pyplot as plt
 
 
 def comparative_histogram(
-    col_df_fraud: pd.Series, col_df_premium: pd.Series, col_name: str, m_x_val, n_bins=100
+    series1: pd.Series,
+    series2: pd.Series,
+    col_name: str,
+    max_val,
+    label1: str,
+    label2: str,
+    n_bins=100,
 ) -> None:
-    fraud = col_df_fraud
-    premium = col_df_premium
-    f_min, f_max = min(fraud), max(fraud)
-    p_min, p_max = min(premium), max(premium)
-    m_n, m_x = min(f_min, p_min), max(f_max, p_max)
-    m_x = min(m_x, m_x_val)
-    # if m_n < 0: m_n = 0
-    bins = np.linspace(m_n, m_x, n_bins)
-    plt.hist(fraud, bins, alpha=0.5, density=True, label="fraud")
-    plt.hist(premium, bins, alpha=0.5, density=True, label="premium")
+    """
+    Plots comparative histograms of two pandas Series.
+
+    Parameters
+    ----------
+    series1 : pd.Series
+        First series to be plotted.
+    series2 : pd.Series
+        Second series to be plotted.
+    col_name : str
+        Name of the column to be used as the x-axis label.
+    max_val : float
+        Maximum value to be used for the x-axis.
+    label1 : str
+        Label for the first series.
+    label2 : str
+        Label for the second series.
+    n_bins : int, optional
+        Number of bins to be used in the histogram, by default 100.
+
+    Returns
+    -------
+    None
+    """
+    min1, max1 = min(series1), max(series1)
+    min2, max2 = min(series2), max(series2)
+    min_val, max_val = min(min1, min2), min(max(max1, max2), max_val)
+    bins = np.linspace(min_val, max_val, n_bins)
+    plt.hist(series1, bins, alpha=0.5, density=True, label=label1)
+    plt.hist(series2, bins, alpha=0.5, density=True, label=label2)
     plt.legend(loc="best")
     plt.xlabel(col_name)
     plt.ylabel("normalized frequency")

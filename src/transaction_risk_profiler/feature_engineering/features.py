@@ -104,3 +104,5 @@ df = df.remove_columns(
     ]
 )
 df.save("final.df")
+
+pd.to_datetime(df["event_published"], unit="s")

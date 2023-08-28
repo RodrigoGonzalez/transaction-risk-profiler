@@ -118,4 +118,4 @@ list_features:
   - ticket_types
 
 features_to_drop:
-  - object_id
+  - index
