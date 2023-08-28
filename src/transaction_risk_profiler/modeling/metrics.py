@@ -21,5 +21,5 @@ def cust_eval(model, train, test):
     return {"train_fn_rate": custom_eval(model, train), "test_fn_rate": custom_eval(model, test)}
 
 
-def cust_roc(model, train, test):
+def custom_roc(model, train, test):
     return {"train_auc": roc_score(model, train), "test_auc": roc_score(model, test)}

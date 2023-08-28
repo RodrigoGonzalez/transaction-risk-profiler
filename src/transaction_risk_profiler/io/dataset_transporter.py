@@ -252,7 +252,8 @@ class DataTransporter:
         directory : str
             The directory to save the data to.
         file_type : str
-            The file type to save the data as. Defaults to JSON.
+            The file type to save the data as.
+            Default to JSON.
 
         Returns
         -------
