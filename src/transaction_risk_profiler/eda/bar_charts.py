@@ -4,78 +4,101 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 
-def comparative_barchart(
-    col_df_fraud: pd.Series, col_df_premium: pd.Series, col_name: str, bar_chart_width: float = 0.5
+def plot_comparative_barchart(
+    series1: pd.Series,
+    series2: pd.Series,
+    column_label: str,
+    bar_width: float = 0.5,
+    title: str = "Comparative Bar Chart",
+    x_label: str = "X-axis",
+    y_label: str = "Y-axis",
 ) -> None:
-    fraud_value_counts = col_df_fraud.value_counts(dropna=True)
-    premium_value_counts = col_df_premium.value_counts(dropna=True)
-    x_ticks_f = list(fraud_value_counts.keys())
-    x_ticks_p = list(premium_value_counts.keys())
-    x_ticks = list(set(x_ticks_f + x_ticks_p))
-    val_f: list[float] = []
-    val_p: list[float] = []
-    for x_tick in x_ticks:
-        if x_tick in fraud_value_counts.keys():
-            val_f.append(fraud_value_counts[x_tick])
-        else:
-            val_f.append(0)
-        if x_tick in premium_value_counts.keys():
-            val_p.append(premium_value_counts[x_tick])
-        else:
-            val_p.append(0)
-    val_f_norm = val_f / (sum(val_f) * 1.0)
-    val_p_norm = val_p / (sum(val_p) * 1.0)
-    # now that ticks and values lists created, can make plot
-    n_ticks = len(x_ticks)
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ind = np.arange(n_ticks)
-    ax.bar(ind, val_f_norm, bar_chart_width, color="blue", alpha=0.5, label="fraud")
-    ax.bar(ind, val_p_norm, bar_chart_width, color="green", alpha=0.5, label="premium")
-    x_tick_marks = [str(x_tick) for x_tick in x_ticks]
-    ax.set_x_ticks(ind + bar_chart_width / 2.0)
-    ax.set_x_ticklabels(x_tick_marks)
-    ax.set_ylabel("normalized frequency")
-    ax.set_xlabel(col_name)
+    """
+    Plots a comparative bar chart for two Pandas' Series.
+
+    Parameters
+    ----------
+    series1 : pd.Series
+        The first pandas Series for comparison.
+    series2 : pd.Series
+        The second pandas Series for comparison.
+    column_label : str
+        The label for the column.
+    bar_width : float, optional
+        The width of the bars in the chart, by default 0.5.
+    title : str, optional
+        The title of the chart, by default 'Comparative Bar Chart'.
+    x_label : str, optional
+        The label for the x-axis, by default 'X-axis'.
+    y_label : str, optional
+        The label for the y-axis, by default 'Y-axis'.
+    """
+    series1_counts = series1.value_counts(dropna=True)
+    series2_counts = series2.value_counts(dropna=True)
+    ticks = list(set(series1_counts.keys()).union(series2_counts.keys()))
+    values1 = [series1_counts.get(tick, 0) for tick in ticks]
+    values2 = [series2_counts.get(tick, 0) for tick in ticks]
+    values1_norm = values1 / np.sum(values1)
+    values2_norm = values2 / np.sum(values2)
+    indices = np.arange(len(ticks))
+
+    fig, ax = plt.subplots()
+    ax.bar(indices, values1_norm, bar_width, color="blue", alpha=0.5, label=series1.name)
+    ax.bar(indices, values2_norm, bar_width, color="green", alpha=0.5, label=series2.name)
+    ax.set_xticks(indices + bar_width / 2.0)
+    ax.set_xticklabels(ticks)
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
     ax.legend(loc="best")
     plt.grid()
     plt.show()
 
 
-def comparative_barchart_value_counts(
-    fraud_value_counts: pd.Series,
-    premium_value_counts: pd.Series,
-    col_name: str,
-    bar_chart_width: float = 0.5,
+def plot_comparative_barchart_value_counts(
+    series1_counts: pd.Series,
+    series2_counts: pd.Series,
+    column_label: str,
+    bar_width: float = 0.5,
+    title: str = "Comparative Bar Chart",
+    x_label: str = "X-axis",
+    y_label: str = "Y-axis",
 ) -> None:
-    x_ticks_f = list(fraud_value_counts.keys())
-    x_ticks_p = list(premium_value_counts.keys())
-    x_ticks = list(set(x_ticks_f + x_ticks_p))
-    val_f = []
-    val_p = []
-    for x_tick in x_ticks:
-        if x_tick in fraud_value_counts.keys():
-            val_f.append(fraud_value_counts[x_tick])
-        else:
-            val_f.append(0)
-        if x_tick in premium_value_counts.keys():
-            val_p.append(premium_value_counts[x_tick])
-        else:
-            val_p.append(0)
-    val_f_norm = val_f / (sum(val_f) * 1.0)
-    val_p_norm = val_p / (sum(val_p) * 1.0)
-    # now that ticks and values lists created, can make plot
-    n_ticks = len(x_ticks)
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ind = np.arange(n_ticks)
+    """
+    Plots a comparative bar chart for two pandas Series using precomputed value counts.
 
-    ax.bar(ind, val_f_norm, bar_chart_width, color="blue", alpha=0.5, label="fraud")
-    ax.bar(ind, val_p_norm, bar_chart_width, color="green", alpha=0.5, label="premium")
-    x_tick_marks = [str(x_tick) for x_tick in x_ticks]
-    ax.set_x_ticklabels(x_tick_marks)
-    ax.set_x_ticks(ind + bar_chart_width / 2.0)
-    ax.set_ylabel("normalized frequency")
-    ax.set_xlabel(col_name)
+    Parameters
+    ----------
+    series1_counts : pd.Series
+        The value counts of the first pandas Series for comparison.
+    series2_counts : pd.Series
+        The value counts of the second pandas Series for comparison.
+    column_label : str
+        The label for the column.
+    bar_width : float, optional
+        The width of the bars in the chart, by default 0.5.
+    title : str, optional
+        The title of the chart, by default 'Comparative Bar Chart'.
+    x_label : str, optional
+        The label for the x-axis, by default 'X-axis'.
+    y_label : str, optional
+        The label for the y-axis, by default 'Y-axis'.
+    """
+    ticks = list(set(series1_counts.keys()).union(series2_counts.keys()))
+    values1 = [series1_counts.get(tick, 0) for tick in ticks]
+    values2 = [series2_counts.get(tick, 0) for tick in ticks]
+    values1_norm = values1 / np.sum(values1)
+    values2_norm = values2 / np.sum(values2)
+    indices = np.arange(len(ticks))
+
+    fig, ax = plt.subplots()
+    ax.bar(indices, values1_norm, bar_width, color="blue", alpha=0.5, label=series1_counts.name)
+    ax.bar(indices, values2_norm, bar_width, color="green", alpha=0.5, label=series2_counts.name)
+    ax.set_xticks(indices + bar_width / 2.0)
+    ax.set_xticklabels(ticks)
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
     ax.legend(loc="best")
     plt.grid()
+    plt.show()

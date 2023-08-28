@@ -213,6 +213,10 @@ data/*
 trained_models/*
 !trained_models/.gitkeep
 
+# model files
+artifacts/*
+!artifacts/.gitkeep
+
 # pytest
 pytest-coverage.txt
 pytest.xml

@@ -14,7 +14,7 @@ def comparative_histogram(
     n_bins=100,
 ) -> None:
     """
-    Plots comparative histograms of two pandas Series.
+    Plots comparative histograms of two Pandas' Series.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def comparative_histogram(
     label2 : str
         Label for the second series.
     n_bins : int, optional
-        Number of bins to be used in the histogram, by default 100.
+        The number of bins to be used in the histogram, by default 100.
 
     Returns
     -------
