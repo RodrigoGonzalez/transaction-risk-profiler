@@ -65,7 +65,7 @@ def plot_comparative_barchart_value_counts(
     y_label: str = "Y-axis",
 ) -> None:
     """
-    Plots a comparative bar chart for two pandas Series using precomputed value counts.
+    Plots a comparative bar chart for two Pandas' Series using precomputed value counts.
 
     Parameters
     ----------
