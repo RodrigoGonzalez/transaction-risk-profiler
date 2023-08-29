@@ -32,7 +32,7 @@ def generate_tfidf_features(
     in_df : pandas.DataFrame
         The input DataFrame.
     text_cols : list[str]
-        A list of column names from which text is to be extracted.
+        A list of column names from which to extract text from.
 
     Returns
     -------
