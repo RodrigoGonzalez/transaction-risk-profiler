@@ -8,7 +8,7 @@ from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 
 
-class ColumnTransformerWrapper(BaseEstimator, TransformerMixin):
+class SklearnTransformerWrapper(BaseEstimator, TransformerMixin):
     """A wrapper for Scikit-learn transformers.
 
     This class allows Scikit-learn transformers to be used in pipelines.
@@ -35,7 +35,7 @@ class ColumnTransformerWrapper(BaseEstimator, TransformerMixin):
         self.variables = variables if isinstance(variables, list) else [variables]
         self.transformer = transformer
 
-    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> ColumnTransformerWrapper:
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> SklearnTransformerWrapper:
         """Fit the transformer to the data.
 
         Parameters
@@ -47,7 +47,7 @@ class ColumnTransformerWrapper(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : ColumnTransformerWrapper
+        self : SklearnTransformerWrapper
             The instance itself.
         """
         self.transformer.fit(X[self.variables])
