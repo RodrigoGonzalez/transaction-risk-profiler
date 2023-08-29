@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "transaction_risk_profiler"
-version = "0.1.0"
+version = "0.2.0"
 description = "Use NLP to identify potentially fraudulent e-commerce financial transactions and flag them for additional review."
 authors = ["Rodrigo Gonzalez <r@rodrigo-gonzalez.com>"]
 license = "MIT"
@@ -149,7 +149,7 @@ experimental = false
 check_pickable = false
 
 [tool.commitizen]
-version = "0.1.0"
+version = "0.2.0"
 name = "cz_conventional_commits"
 tag_format = "v$version"
 version_scheme = "semver"

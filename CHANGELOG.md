@@ -1,0 +1,23 @@
+## v0.2.0 (2023-08-28)
+
+### Feat
+
+- **data-transporter**: update data transporter to incorporate datetime features, splitting dataset, and dropping predefined columns (#9)
+- **io**: add dataset loader and corresponding helper functions and enums (#8)
+- **feature-engineering**: add functions for categorical and simple transforms (#7)
+- **preprocessing**: added text and knn files and refactored code to increase readability (#6)
+- **main-application**: added preprocessing, configs, eda, feature engineering and utils directories (#5)
+- **main-app**: add folder structure (#4)
+- **utils**: add utility directory for utility files (#3)
+- **project**: update project completely add poetry, linters, move python files to package, add versioning (#1)
+
+### Refactor
+
+- **preprocessing**: update text transformations and processing, adding docstrings and making the code more efficient (#17)
+- **preprocessing**: refactor tfidf file to contain better docstrings and improve code (#16)
+- **simple-transforms**: update to include addition functions that apply simple transformations (#15)
+- **eda**: update charting functions to accept labels as parameters (#14)
+- **main-application**: refactored charts to accept any column value names, add EDA notebook, update dataset transfer class (#13)
+- **modeling**: update functions with type hints, better docstrings, and improve code overall (#12)
+- **models**: refactor baseline file adding type hints and documentation and improving code (#11)
+- **models**: update model files with efficiency improvements, type hints, and docstrings (#10)
