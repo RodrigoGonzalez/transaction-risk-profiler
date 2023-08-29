@@ -8,7 +8,7 @@ from sklearn.metrics import recall_score
 from sklearn.model_selection import train_test_split
 
 from transaction_risk_profiler.common.enums.dataset import TargetEnum
-from transaction_risk_profiler.feature_engineering.simple_transforms import proportion_non_empty
+from transaction_risk_profiler.preprocessing.feature_engineering import proportion_non_empty
 
 logger = logging.getLogger(__name__)
 
