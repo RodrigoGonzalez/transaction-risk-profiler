@@ -1,3 +1,11 @@
+## v0.3.0 (2023-08-31)
+
+### Feat
+
+- **aggregations**: added new functions to aggregate list variables (#22)
+- **transformer**: add transformers module to support custom transformations that can be used in scikit learn (#20)
+- **notebooks**: add histogram charts to eda notebook (#19)
+
 ## v0.2.0 (2023-08-28)
 
 ### Feat
