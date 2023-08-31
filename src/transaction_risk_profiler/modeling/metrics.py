@@ -3,8 +3,6 @@ import graphlab as gl
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 
-from transaction_risk_profiler.preprocessing.aggregations import get_payout_info
-
 
 def custom_eval(model: gl.boosted_trees_classifier, data: pd.DataFrame) -> float:
     target = model.get("target")
@@ -25,6 +23,3 @@ def cust_eval(model, train, test):
 
 def custom_roc(model, train, test):
     return {"train_auc": roc_score(model, train), "test_auc": roc_score(model, test)}
-
-
-get_payout_info
