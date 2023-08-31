@@ -106,8 +106,12 @@ def create_agg_schema(item: str) -> dict[str, dict[str, Any]]:
             "min_cost": "min",
             "med_cost": "median",
             "max_cost": "max",
+            "mean_cost": "mean",
+            "std_cost": "std",
             "options": "count",
         },
+        "created": {"min_created": "min", "max_created": "max"},
+        "event_id": {"unique_events": unique_count},
     }
 
 
@@ -196,30 +200,101 @@ def get_ticket_info(df):
     return pd.DataFrame(element_list, columns=ticket_columns)
 
 
-def create_agg_dict(item: str) -> dict[str, dict[str, str | Callable[[pd.Series], int]]]:
+def apply_aggregations(group: pd.DataFrame, flat_agg_func: dict) -> pd.Series:
     """
-    Creates an aggregation dictionary for groupby operations.
+    Applies a set of aggregation functions to a given DataFrame group.
+
+    This function iterates over each column-function pair in the global
+    `flat_agg_func` dictionary.
+
+    For each pair, it checks if the column exists in the group DataFrame.
+    If it does, it applies the aggregation function(s) to the column. The
+    results are stored in a dictionary where the keys are the
+    column-function pairs and the values are the results of the aggregation
+    functions.
 
     Parameters
     ----------
-    item : str
-        The prefix for the aggregation columns.
+    group : pd.DataFrame
+        The DataFrame group to which the aggregation functions are applied.
+    flat_agg_func : dict
+        A dictionary where the keys are column names and the values are
+        aggregation functions applicable to these columns.
 
     Returns
     -------
-    dict[str, dict[str, Union[str, Callable[[pd.Series], int]]]]
-        A dictionary containing aggregation instructions.
+    pd.Series
+        A series where the index is the column-function pairs and the
+        values are the results of the aggregation functions.
     """
-    return {
-        "amount": {
-            f"{item}_amt_sum": "sum",
-            f"{item}_amt_min": "min",
-            f"{item}_amt_max": "max",
-            f"{item}_amt_mean": "mean",
-            f"{item}_amt_count": "count",
-            f"{item}_amt_std": "std",
-        },
-    }
+    result = {}
+    for col, funcs in flat_agg_func.items():
+        if col in group.columns:
+            for func in funcs:
+                result_key = f"{col}_{func.__name__}" if callable(func) else f"{col}_{func}"
+                result[result_key] = func(group[col]) if callable(func) else group[col].agg(func)
+    return pd.Series(result)
+
+
+def weighted_cost(x: pd.DataFrame) -> float:
+    """
+    Computes the weighted cost based on the 'cost' and 'quantity_sold'
+    columns of a DataFrame.
+
+    The weighted cost is calculated as the sum of the product of 'cost' and
+    'quantity_sold' divided by the total 'quantity_sold'.
+
+    If 'quantity_sold' is not present or its sum is 0, the function returns
+    0.
+
+    Parameters
+    ----------
+    x : pd.DataFrame
+        The input DataFrame which must contain the columns "cost" and
+        "quantity_sold".
+
+    Returns
+    -------
+    float
+        The computed weighted cost, or 0 if "quantity_sold" is not present
+        or its sum is 0.
+    """
+    return (
+        (x["cost"] * x["quantity_sold"]).sum() / x["quantity_sold"].sum()
+        if "quantity_sold" in x and x["quantity_sold"].sum() != 0
+        else 0
+    )
+
+
+def fraction_sold(x: pd.DataFrame) -> float:
+    """
+    Computes the fraction of items sold over the total quantity of items.
+
+    The fraction is calculated as the sum of 'quantity_sold' divided by the
+    sum of 'quantity_total'.
+
+    If either "quantity_sold" or "quantity_total" is not present in the
+    DataFrame or if the sum of "quantity_total" is 0, the function returns
+    0.
+
+    Parameters
+    ----------
+    x : pd.DataFrame
+        The input DataFrame which must contain the columns "quantity_sold"
+        and "quantity_total".
+
+    Returns
+    -------
+    float
+        The computed fraction of sold items over the total quantity of
+        items, or 0 if either "quantity_sold" or "quantity_total" is not
+        present or if the sum of "quantity_total" is 0.
+    """
+    return (
+        x["quantity_sold"].sum() / x["quantity_total"].sum()
+        if "quantity_sold" in x and "quantity_total" in x and x["quantity_total"].sum() != 0
+        else 0
+    )
 
 
 def aggregate_data(
@@ -257,20 +332,6 @@ def aggregate_data(
     """
     df = deepcopy(df)
 
-    def weighted_cost(x):
-        return (
-            (x["cost"] * x["quantity_sold"]).sum() / x["quantity_sold"].sum()
-            if "quantity_sold" in x and x["quantity_sold"].sum() != 0
-            else 0
-        )
-
-    def fraction_sold(x):
-        return (
-            x["quantity_sold"].sum() / x["quantity_total"].sum()
-            if "quantity_sold" in x and "quantity_total" in x and x["quantity_total"].sum() != 0
-            else 0
-        )
-
     # Update your aggregation schema to use these new functions
     agg_func["cost"][f"{group_col}_weighted_cost"] = weighted_cost
     agg_func["quantity_sold"][f"{group_col}_fraction_sold"] = fraction_sold
@@ -294,20 +355,8 @@ def aggregate_data(
         }
 
     # Perform the aggregation
-    def apply_aggregations(group):
-        result = {}
-        for col, funcs in flat_agg_func.items():
-            if col in group.columns:
-                for func in funcs:
-                    result_key = f"{col}_{func.__name__}" if callable(func) else f"{col}_{func}"
-                    result[result_key] = (
-                        func(group[col]) if callable(func) else group[col].agg(func)
-                    )
-        return pd.Series(result)
-
     agg_df = df.groupby(group_col).apply(apply_aggregations)
 
     # Rename columns that use lambda functions
     agg_df.rename(columns=lambda x: x.replace("<lambda>", "unique_count"), inplace=True)
-
     return agg_df.fillna(0)
