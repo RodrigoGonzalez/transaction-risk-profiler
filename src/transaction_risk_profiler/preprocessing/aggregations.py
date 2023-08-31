@@ -1,8 +1,11 @@
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterable
+from copy import deepcopy
 from typing import Any
 from typing import TypeVar
+
+import pandas as pd
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -46,11 +49,11 @@ def group_by_elements(key_selector: Callable[[T], V], sequence: Iterable[T]) -> 
     return grouped_elements
 
 
-def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
+def create_agg_schema(item: str) -> dict[str, dict[str, Any]]:
     """
-    Generates an aggregation schema dictionary for a given item.
+    Creates an aggregation schema dictionary for a specific item.
 
-    The function creates a dictionary that maps the type of the field (e.g.,
+    This function generates a dictionary that maps the type of the field (e.g.,
     'amount', 'country', 'state') to a dictionary of aggregation functions
     (e.g., sum, min, max, mean, etc.). The function also appends the item's
     name to the aggregation keys.
@@ -58,7 +61,7 @@ def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
     Parameters
     ----------
     item : str
-        The name of the item for which the aggregation schema is generated.
+        The name of the item for which the aggregation schema is created.
 
     Returns
     -------
@@ -67,7 +70,7 @@ def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
 
     Examples
     --------
-    >>> generate_aggregation_schema('product')
+    >>> create_agg_schema('product')
     {
         'amount': {
             'product_amt_sum': 'sum',
@@ -85,7 +88,6 @@ def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
         }
     }
     """
-
     unique_count: Callable = lambda x: x.nunique()
 
     return {
@@ -99,4 +101,213 @@ def generate_aggregation_schema(item: str) -> dict[str, dict[str, Any]]:
         },
         "country": {f"{item}_country_count": unique_count},
         "state": {f"{item}_state_count": unique_count},
+        "quantity_sold": {"total_sold": "sum"},
+        "cost": {
+            "min_cost": "min",
+            "med_cost": "median",
+            "max_cost": "max",
+            "options": "count",
+        },
     }
+
+
+def get_payout_info(df):
+    """
+    Retrieves payout information from a DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame containing 'object_id' and 'previous_payouts'
+        columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing extracted payout information.
+    """
+    payout_columns = [
+        "object_id",
+        "address",
+        "amount",
+        "country",
+        "created",
+        "event",
+        "name",
+        "state",
+        "uid",
+        "zip_code",
+    ]
+
+    element_list = [
+        (
+            df.object_id[idx],
+            element["address"],
+            element["amount"],
+            element["country"],
+            element["created"],
+            element["event"],
+            element["name"],
+            element["state"],
+            element["uid"],
+            element["zip_code"],
+        )
+        for idx in range(df.shape[0])
+        for element in df.previous_payouts[idx]
+    ]
+    return pd.DataFrame(element_list, columns=payout_columns)
+
+
+def get_ticket_info(df):
+    """
+    Retrieves ticket information from a DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame containing 'object_id' and 'ticket_types' columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing extracted ticket information.
+    """
+    ticket_columns = [
+        "object_id",
+        "availability",
+        "cost",
+        "event_id",
+        "quantity_sold",
+        "quantity_total",
+    ]
+
+    element_list = [
+        (
+            df.object_id[idx],
+            element["availability"],
+            element["cost"],
+            element["event_id"],
+            element["quantity_sold"],
+            element["quantity_total"],
+        )
+        for idx in range(df.shape[0])
+        for element in df.ticket_types[idx]
+    ]
+    return pd.DataFrame(element_list, columns=ticket_columns)
+
+
+def create_agg_dict(item: str) -> dict[str, dict[str, str | Callable[[pd.Series], int]]]:
+    """
+    Creates an aggregation dictionary for groupby operations.
+
+    Parameters
+    ----------
+    item : str
+        The prefix for the aggregation columns.
+
+    Returns
+    -------
+    dict[str, dict[str, Union[str, Callable[[pd.Series], int]]]]
+        A dictionary containing aggregation instructions.
+    """
+    return {
+        "amount": {
+            f"{item}_amt_sum": "sum",
+            f"{item}_amt_min": "min",
+            f"{item}_amt_max": "max",
+            f"{item}_amt_mean": "mean",
+            f"{item}_amt_count": "count",
+            f"{item}_amt_std": "std",
+        },
+    }
+
+
+def aggregate_data(
+    df: pd.DataFrame, group_col: str, agg_func: dict[str, dict[str, Any]]
+) -> pd.DataFrame:
+    """
+    Aggregates a DataFrame based on a given column and aggregation function.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame to aggregate.
+    group_col : str
+        The name of the column to group the DataFrame by.
+    agg_func : dict
+        The aggregation function to apply to the grouped data. This should be a
+        dictionary where the keys are column names and the values are
+        aggregation functions applicable to these columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        The aggregated DataFrame with missing values filled with zeros.
+
+    Example
+    -------
+    # >>> df = pd.DataFrame({
+    # ...     'A': ['foo', 'bar', 'foo', 'bar', 'foo', 'bar', 'foo', 'foo'],
+    # ...     'B': ['one', 'one', 'two', 'three', 'two', 'two', 'one', 'three'],
+    # ...     'C': np.random.randn(8),
+    # ...     'D': np.random.randn(8)
+    # ... })
+    # >>> agg_func = {'C': ['sum', 'min'], 'D': ['max', 'min']}
+    # >>> aggregate_data(df, 'A', agg_func)
+    """
+    df = deepcopy(df)
+
+    def weighted_cost(x):
+        return (
+            (x["cost"] * x["quantity_sold"]).sum() / x["quantity_sold"].sum()
+            if "quantity_sold" in x and x["quantity_sold"].sum() != 0
+            else 0
+        )
+
+    def fraction_sold(x):
+        return (
+            x["quantity_sold"].sum() / x["quantity_total"].sum()
+            if "quantity_sold" in x and "quantity_total" in x and x["quantity_total"].sum() != 0
+            else 0
+        )
+
+    # Update your aggregation schema to use these new functions
+    agg_func["cost"][f"{group_col}_weighted_cost"] = weighted_cost
+    agg_func["quantity_sold"][f"{group_col}_fraction_sold"] = fraction_sold
+
+    # Flatten the nested aggregation dictionary to match Pandas' expected format
+    flat_agg_func = {col: list(funcs.values()) for col, funcs in agg_func.items()}
+
+    # Check if the required columns exist in the DataFrame
+    required_columns = set(flat_agg_func.keys())
+    existing_columns = set(df.columns)
+
+    if not required_columns.issubset(existing_columns):
+        missing_columns = required_columns - existing_columns
+        print(
+            f"Warning: Column(s) {list(missing_columns)} do not exist in the "
+            f"DataFrame. Skipping these columns."
+        )
+        # Remove missing columns from the aggregation schema
+        flat_agg_func = {
+            col: funcs for col, funcs in flat_agg_func.items() if col in existing_columns
+        }
+
+    # Perform the aggregation
+    def apply_aggregations(group):
+        result = {}
+        for col, funcs in flat_agg_func.items():
+            if col in group.columns:
+                for func in funcs:
+                    result_key = f"{col}_{func.__name__}" if callable(func) else f"{col}_{func}"
+                    result[result_key] = (
+                        func(group[col]) if callable(func) else group[col].agg(func)
+                    )
+        return pd.Series(result)
+
+    agg_df = df.groupby(group_col).apply(apply_aggregations)
+
+    # Rename columns that use lambda functions
+    agg_df.rename(columns=lambda x: x.replace("<lambda>", "unique_count"), inplace=True)
+
+    return agg_df.fillna(0)
