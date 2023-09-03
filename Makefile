@@ -324,11 +324,16 @@ quick-check:  ## Run quick check
 comby: ## Generic rules (required comby https://comby.dev/docs/)
 	# install using `brew install comby`
 	echo  "Requires Comby https://comby.dev/docs/"
+	comby ':[space]print :[1]' ':[space]print(:[1])' -directory 'src' -extensions 'py' -in-place
 	comby 'print(:[1])' 'logger.info(:[1])' -directory 'src' -extensions 'py' -in-place
 
 clean-notebooks: ## Remove output files from notebooks
 	jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
 	# find . -type f -name '*.ipynb' -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
+
+generate-python: ## Generate python files from notebooks
+	#jupyter nbconvert --to python notebooks/*.ipynb
+	find . -type f -name '*.ipynb' -exec jupyter nbconvert --to python {} \;
 
 # =============================================================================
 # SELF DOCUMENTATION

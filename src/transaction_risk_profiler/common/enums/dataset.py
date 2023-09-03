@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from enum import EnumMeta
 
 
 class DataColumnsEnum(str, Enum):
@@ -223,3 +224,51 @@ class PreviousPayoutsColumnsEnum(str, Enum):
 
     def __str__(self):
         return self.value
+
+
+class CustomEnumMeta(EnumMeta):
+    """
+    A custom metaclass to inject docstrings into Enum members.
+    """
+
+    def __new__(cls, name, bases, dct, **kwargs):
+        for key, val in dct.get("_docstrings_", {}).items():
+            dct[key]._value_.__doc__ = val
+        return super().__new__(cls, name, bases, dct, **kwargs)
+
+
+def generate_data_columns_enum_with_docstrings(column_names, docstrings):
+    """
+    Dynamically generate a DataColumnsEnum class with custom docstrings.
+
+    Parameters
+    ----------
+    column_names : list of str
+        List of column names for which enum members will be created.
+
+    docstrings : dict
+        Dictionary mapping enum member names to their docstrings.
+
+    Returns
+    -------
+    DataColumnsEnum : Enum
+        An enumeration class with members and custom docstrings.
+    """
+    return CustomEnumMeta(
+        "DataColumnsEnum",
+        (str, Enum),
+        {
+            "_docstrings_": docstrings,
+            **{name: name.lower() for name in column_names},
+        },
+    )
+
+
+# Example usage
+# column_names = ['ACCT_TYPE', 'APPROX_PAYOUT_DATE', 'BODY_LENGTH']
+# docstrings = {
+#     'ACCT_TYPE': 'Account type',
+#     'APPROX_PAYOUT_DATE': 'Approximate payout date',
+#     'BODY_LENGTH': 'Body length'
+# }
+# DataColumnsEnum = generate_data_columns_enum_with_docstrings(column_names, docstrings)
