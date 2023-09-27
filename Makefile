@@ -335,6 +335,14 @@ generate-python: ## Generate python files from notebooks
 	#jupyter nbconvert --to python notebooks/*.ipynb
 	find . -type f -name '*.ipynb' -exec jupyter nbconvert --to python {} \;
 
+sync-notebooks: ## Sync notebooks from notebooks to docs
+	# Turn notebook.ipynb into a paired ipynb/py notebook
+	# jupytext --set-formats ipynb,py notebook.ipynb
+	# Update whichever of notebook.ipynb/notebook.py is outdated
+	# jupytext --sync notebook.ipynb
+	jupytext --sync notebooks/*.ipynb
+
+
 # =============================================================================
 # SELF DOCUMENTATION
 # =============================================================================

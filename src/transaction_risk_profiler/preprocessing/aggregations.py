@@ -2,6 +2,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterable
 from copy import deepcopy
+from functools import partial
 from typing import Any
 from typing import TypeVar
 
@@ -355,7 +356,8 @@ def aggregate_data(
         }
 
     # Perform the aggregation
-    agg_df = df.groupby(group_col).apply(apply_aggregations)
+    agg_func_partial = partial(apply_aggregations, flat_agg_func=flat_agg_func)
+    agg_df = df.groupby(group_col).apply(agg_func_partial)
 
     # Rename columns that use lambda functions
     agg_df.rename(columns=lambda x: x.replace("<lambda>", "unique_count"), inplace=True)

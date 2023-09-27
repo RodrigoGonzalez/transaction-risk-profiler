@@ -1,5 +1,10 @@
 import numpy as np
 import pandas as pd
+from sklearn import clone
+from sklearn.base import BaseEstimator
+from sklearn.base import MetaEstimatorMixin
+from sklearn.base import TransformerMixin
+from sklearn.utils.validation import check_is_fitted
 
 
 def extract_previous_payouts(x):
@@ -106,3 +111,31 @@ df = df.remove_columns(
 df.save("final.df")
 
 pd.to_datetime(df["event_published"], unit="s")
+
+
+class FeatureFromRegressor(MetaEstimatorMixin, BaseEstimator, TransformerMixin):
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def fit(self, X, y=None):
+        estimator_ = clone(self.estimator)
+        estimator_.fit(X, y)
+        self.estimator_ = estimator_
+        self.n_features_in_ = self.estimator_.n_features_in_
+        if hasattr(self.estimator, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator.feature_names_in_
+        return self  # always return self!
+
+    def transform(self, X):
+        check_is_fitted(self)
+        predictions = self.estimator_.predict(X)
+        if predictions.ndim == 1:
+            predictions = predictions.reshape(-1, 1)
+        return predictions
+
+    def get_feature_names_out(self, names=None):
+        check_is_fitted(self)
+        n_outputs = getattr(self.estimator_, "n_outputs_", 1)
+        estimator_class_name = self.estimator_.__class__.__name__
+        estimator_short_name = estimator_class_name.lower().replace("_", "")
+        return [f"{estimator_short_name}_prediction_{i}" for i in range(n_outputs)]
