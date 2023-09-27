@@ -47,7 +47,7 @@ repos:
 
       - id: black
         name: black-format
-        entry: poetry run black src tests
+        entry: poetry run black src tests notebooks
         args: [--config=pyproject.toml]
         language: system
         types: [python]
@@ -55,7 +55,7 @@ repos:
 
       - id: black-check
         name: black-lint
-        entry: poetry run black src tests --check
+        entry: poetry run black src tests notebooks --check
         args: [--config=pyproject.toml]
         language: system
         types: [python]
@@ -92,6 +92,10 @@ repos:
     rev: 6.1.0
     hooks:
       - id: flake8
+        entry: poetry run flake8 src tests
+        language: system
+        types: [python]
+        stages: [commit, manual, push]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.0.3

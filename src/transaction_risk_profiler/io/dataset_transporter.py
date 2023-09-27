@@ -262,12 +262,20 @@ class DataTransporter:
         if not base_filename:
             base_filename = self.base_filename
 
-        if file_type != "json":
+        if file_type not in {"json", "csv"}:
             raise TypeError(f"File type {file_type} not supported.")
 
         full_base_filename = f"{directory}/{base_filename}"
+        if file_type == "csv":
+            self.df_train.to_csv(f"{full_base_filename}_train.csv")
+            self.df_test.to_csv(f"{full_base_filename}_test.csv")
+
+            if self.df_holdout is not None:
+                self.df_holdout.to_csv(f"{full_base_filename}_holdout.csv")
+
         self.df_train.to_json(f"{full_base_filename}_train.{file_type}")
         self.df_test.to_json(f"{full_base_filename}_test.{file_type}")
+
         if self.df_holdout is not None:
             self.df_holdout.to_json(f"{full_base_filename}_holdout.{file_type}")
 
@@ -281,4 +289,4 @@ if __name__ == "__main__":
         holdout_ratio=0.1,
         dataset_card_filename="dataset_card.yml",
     )
-    dt.save_data()
+    dt.save_data(file_type="csv")

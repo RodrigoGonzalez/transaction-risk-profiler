@@ -1,0 +1,6 @@
+[flake8]
+ignore =
+    #  inline comment should start with '# '
+    E262,
+    #  module level import not at top of file
+    E402,
