@@ -1,3 +1,13 @@
+## v0.4.0 (2023-09-27)
+
+### Feat
+
+- update features and data transformer files (#27)
+
+### Fix
+
+- **aggregations**: update functions to fix column errors, and add docstrings (#25)
+
 ## v0.3.0 (2023-08-31)
 
 ### Feat
