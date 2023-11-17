@@ -92,8 +92,7 @@ class EventAPIClient:
         """
         while True:
             logger.info("Initiating request for new data from the API...")
-            data = self.get_data()
-            if data:
+            if data := self.get_data():
                 logger.info("Data received. Initiating saving process...")
                 for row in data:
                     self.save_to_database(row)

@@ -173,9 +173,7 @@ def yaml_ordered_load(stream: Any, object_pairs_hook: Callable = OrderedDict) ->
 
     if isinstance(stream, Path):
         stream.resolve()
-        with open(stream) as f:
-            stream = f.read()
-
+        stream = Path(stream).read_text()
     ordered_loader = cast(type[Loader], type("OrderedLoader", (Loader,), {}))
     ordered_loader.add_constructor(
         resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_ordered_mapping
