@@ -15,7 +15,7 @@ include = ["README.md", "LICENSE", "CHANGELOG.md"]
 python = ">=3.11, <3.12"
 flask = "^2.3.3"
 pymongo = "^4.5.0"
-requests = "^2.31.0"
+requests = "^2.32.0"
 flask-restful = "^0.3.10"
 apscheduler = "^3.10.4"
 simplejson = "^3.19.1"
