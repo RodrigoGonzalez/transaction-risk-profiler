@@ -13,7 +13,7 @@ include = ["README.md", "LICENSE", "CHANGELOG.md"]
 
 [tool.poetry.dependencies]
 python = ">=3.11, <3.12"
-flask = "^2.3.3"
+flask = ">=2.3.3,<4.0.0"
 pymongo = "^4.6.3"
 requests = "^2.32.0"
 flask-restful = "^0.3.10"
@@ -67,7 +67,7 @@ pyupgrade = "^3.13.0"
 
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.4.2"
+pytest = ">=7.4.2,<10.0.0"
 pytest-cov = "^4.1.0"
 pytest-mock = "^3.11.1"
 pytest-asyncio = "^0.21.1"
